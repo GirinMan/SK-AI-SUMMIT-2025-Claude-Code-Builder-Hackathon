@@ -44,6 +44,13 @@ tar -czf {팀명}.tar.gz my-project/
 mkdir -p /tmp/extract_check && tar -xzf {팀명}.tar.gz -C /tmp/extract_check
 if [ -f /tmp/extract_check/main.py ] && [ -f /tmp/extract_check/requirements.txt ]; then
   echo "OK: main.py and requirements.txt found at archive root"
+elif [ $(ls -A /tmp/extract_check | wc -l) -eq 1 ]; then
+  dir=$(ls -A /tmp/extract_check)
+  if [ -f "/tmp/extract_check/$dir/main.py" ] && [ -f "/tmp/extract_check/$dir/requirements.txt" ]; then
+    echo "OK: main.py and requirements.txt found in top-level folder"
+  else
+    echo "ERROR: main.py or requirements.txt NOT found" && exit 1
+  fi
 else
   echo "ERROR: main.py or requirements.txt NOT found at archive root" && exit 1
 fi
