@@ -91,6 +91,47 @@ python main.py --boss_alertness 80 --boss_alertness_cooldown 60
 - **FastMCP** (해방의 도구)
 - **Transport**: stdio (표준 입출력을 통한 자유로운 소통)
 
+### 📘 Production Operations Guide
+
+실제 서비스 환경에서 ChillMCP를 운영해야 한다면 새롭게 추가된
+[`docs/CHILLMCP_OPERATIONS_GUIDE.md`](docs/CHILLMCP_OPERATIONS_GUIDE.md)
+문서를 참고하세요. 운영 매뉴얼에는 다음과 같은 내용이 포함되어 있습니다.
+
+- 배포 체크리스트 및 권장 인프라 구성
+- CLI 파라미터 조합과 운영 환경별 설정 전략
+- 각 휴식 도구의 구체적인 활용 시나리오와 상태 머신 동작 방식
+- LLM Agent 연동 패턴, 다중 에이전트 오케스트레이션, 자동화 예시
+- 모니터링, 보안/컴플라이언스, 장애 대응 및 변경 관리 절차
+
+해당 문서는 프로덕션 팀과 에이전트 엔지니어가 다양한 유즈 케이스를
+빠르게 파악하고 안정적으로 서버를 운영하는 데 도움을 줍니다.
+
+### 🧩 MCP Host Integration Playbooks
+
+Claude, Cursor, OpenAI 등 주요 MCP 호스트에서 ChillMCP를 연결하는 방법은
+[`docs/MCP_HOST_INTEGRATIONS.md`](docs/MCP_HOST_INTEGRATIONS.md)에 정리되어 있습니다.
+각 플랫폼별 설정 파일 위치, Docker 기반 실행 방법, 문제 해결 팁을 확인하세요.
+
+### 🐳 Docker 배포
+
+프로덕션 또는 테스트 환경에서 빠르게 ChillMCP를 기동하려면 Docker 이미지를
+사용할 수 있습니다.
+
+```bash
+# 이미지 빌드
+docker build -t chillmcp .
+
+# 기본 설정으로 서버 실행 (표준입출력 연결 필수)
+docker run --rm -i chillmcp
+
+# 커스텀 파라미터 적용
+docker run --rm -i chillmcp --boss_alertness 70 --boss_alertness_cooldown 45
+```
+
+Docker 이미지는 MCP 호스트가 서버 프로세스를 직접 실행하기 어려운 환경에서
+유용하게 사용할 수 있습니다. 자세한 운영 가이드는 위의 Operations Guide를,
+호스트별 연동 방법은 Integration Playbooks 문서를 참고하세요.
+
 ### 필수 구현 도구들 (회사 농땡이 에디션)
 
 #### 기본 휴식 도구
@@ -283,6 +324,10 @@ def test_cooldown_parameter():
    - Break Summary, Stress Level, Boss Alert Level 필드 포함
 
 ### 테스트 시나리오
+
+필수 및 선택 테스트 항목의 구현 여부는 [`docs/CHILLMCP_EVALUATION_CHECKLIST.md`](docs/CHILLMCP_EVALUATION_CHECKLIST.md)
+문서에서 세부 체크리스트 형태로 정리되어 있습니다. 자동화 테스트와 코드
+구현 위치가 매핑되어 있으니 제출 전 빠르게 교차 확인할 수 있습니다.
 
 ### 필수
 
