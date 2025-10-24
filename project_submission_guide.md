@@ -31,17 +31,16 @@
 프로젝트 폴더가 `my-project/` 라면 아래처럼 압축합니다:
 
 ```bash
-tar -czf {팀명}.tar.gz my-project/
+tar -czf {팀명}.tar.gz -C my-project/ .
 ```
 
-예: 팀명이 "team-rocket"이라면 `tar -czf team-rocket.tar.gz my-project/`
+예: 팀명이 "team-rocket"이라면 `tar -czf team-rocket.tar.gz -C my-project/ .`
 
 ## 제출 전 자동검사(간단)
 
 로컬에서 압축을 풀고 `main.py`와 `requirements.txt`가 루트에 있는지 확인하는 간단한 커맨드:
 
 ```bash
-mkdir -p /tmp/extract_check && tar -xzf {팀명}.tar.gz -C /tmp/extract_check
 if [ -f /tmp/extract_check/main.py ] && [ -f /tmp/extract_check/requirements.txt ]; then
   echo "OK: main.py and requirements.txt found at archive root"
 else
