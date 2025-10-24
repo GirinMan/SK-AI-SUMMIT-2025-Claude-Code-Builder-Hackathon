@@ -10,7 +10,7 @@
 
 - 압축을 풀었을 때 "최상위(루트) 디렉터리"에 `main.py` 파일이 바로 존재해야 합니다. 즉, 압축을 푼 폴더를 열었을 때 곧바로 `main.py`가 보여야 합니다. 서브폴더(`src/`, `app/` 등) 안에 들어가 있으면 안 됩니다.
 
-- 또한 `requirements.txt` 파일을 프로젝트 루트에 반드시 포함해야 합니다. 심사 시 의존성 설치는 `pip install -r requirements.txt` 명령으로 이루어집니다.
+- 또한 `requirements.txt` 파일을 프로젝트 루트에 반드시 포함해야 합니다. 심사 시 의존성 설치는 `pip install -r requirements.txt` 명령으로 이루어집니다. (내부 테스트를 실행하려면 추가로 `pip install -r requirements-test.txt`를 사용할 수 있습니다.)
 
 ### 잘된 예
 
@@ -57,6 +57,8 @@ fi
 python -m venv venv
 source venv/bin/activate  # macOS / Linux
 pip install -r requirements.txt
+# 테스트 필요 시
+pip install -r requirements-test.txt
 python main.py
 ```
 

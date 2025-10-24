@@ -69,8 +69,11 @@ source venv/bin/activate
 # Windows:
 # venv\Scripts\activate
 
-# Install dependencies
+# Install core dependencies
 pip install -r requirements.txt
+
+# (Optional) Install testing dependencies
+pip install -r requirements-test.txt
 ```
 
 Note: Review/submission will be conducted in Python 3.11 environment. Please verify functionality in Python 3.11 before submission.
