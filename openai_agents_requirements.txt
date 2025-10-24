@@ -1,0 +1,2 @@
+# Extra dependencies for running openai_agents_mcp_demo.py
+openai-agents>=0.4.1
