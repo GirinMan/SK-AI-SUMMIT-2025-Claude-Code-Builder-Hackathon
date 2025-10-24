@@ -69,8 +69,11 @@ source venv/bin/activate
 # Windows:
 # venv\Scripts\activate
 
-# 의존성 설치
+# 의존성 설치 (기본 서버)
 pip install -r requirements.txt
+
+# 테스트 의존성 추가 설치 (선택)
+pip install -r requirements-test.txt
 ```
 
 참고: 심사/제출은 Python 3.11 환경에서 이루어집니다. 제출 전 Python 3.11에서 동작 여부를 반드시 확인하세요.
@@ -120,6 +123,7 @@ Claude, Cursor, OpenAI 등 주요 MCP 호스트에서 ChillMCP를 연결하는 �
 
 ```bash
 pip install -r requirements.txt                   # 기본 서버 의존성
+pip install -r requirements-test.txt             # pytest 기반 테스트 의존성
 pip install -r openai_agents_requirements.txt     # 에이전트 데모 전용 추가 의존성
 export OPENAI_API_KEY="sk-..."                      # 또는 Windows 환경 변수로 설정
 python openai_agents_mcp_demo.py

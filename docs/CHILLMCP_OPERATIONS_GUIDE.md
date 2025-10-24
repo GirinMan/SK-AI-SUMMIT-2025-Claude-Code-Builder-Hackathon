@@ -15,7 +15,7 @@ ChillMCP는 Python 기반 [FastMCP](https://github.com/modelcontextprotocol/fast
 ## 2. 배포 체크리스트
 
 1. Python 3.11을 설치하고 독립적인 가상환경을 준비합니다.
-2. `pip install -r requirements.txt`로 의존성을 설치합니다.
+2. `pip install -r requirements.txt`로 코어 의존성을 설치하고, 테스트를 실행할 예정이라면 `pip install -r requirements-test.txt`를 추가로 수행합니다.
 3. 서버를 실행할 호스트(컨테이너 또는 VM)에 최소 128MB RAM과 stdio로 MCP 서버를 띄울 수 있는 네트워크 환경을 마련합니다.
 4. 선호하는 관측 도구를 사용해 stdout/stderr 로그 수집을 구성합니다.
 5. 컴플라이언스 요구에 맞춰 `--boss_alertness`, `--boss_alertness_cooldown` 기본값을 결정합니다.
