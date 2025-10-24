@@ -112,6 +112,28 @@ Claude, Cursor, OpenAI 등 주요 MCP 호스트에서 ChillMCP를 연결하는 �
 [`docs/MCP_HOST_INTEGRATIONS.md`](docs/MCP_HOST_INTEGRATIONS.md)에 정리되어 있습니다.
 각 플랫폼별 설정 파일 위치, Docker 기반 실행 방법, 문제 해결 팁을 확인하세요.
 
+### 🤖 OpenAI Agents SDK 데모
+
+`openai_agents_mcp_demo.py` 스크립트는 OpenAI Agents SDK에서 ChillMCP를
+외부 MCP 서버로 등록한 뒤, Responses API 기반 LLM이 실제로 휴식 도구를 호출하는
+풀 시나리오를 재현합니다. 실행 전 아래 단계를 준비하세요.
+
+```bash
+pip install -r requirements.txt                   # 기본 서버 의존성
+pip install -r openai_agents_requirements.txt     # 에이전트 데모 전용 추가 의존성
+export OPENAI_API_KEY="sk-..."                      # 또는 Windows 환경 변수로 설정
+python openai_agents_mcp_demo.py
+```
+
+스크립트는 다음을 확인할 수 있도록 상세 로그를 출력합니다.
+
+- 어떤 MCP 도구를 어떤 인자로 호출했는지 (`server_label::tool_name` 형식)
+- 도구 실행 결과 전문과 토큰 사용량
+- 사용자 정의 컨텍스트(`ChillRunContext`)에 기록된 휴식 플랜 이력
+
+Responses API 액세스가 가능한 OpenAI 키가 필요하며, 실행 후에는 `await server.cleanup()`
+을 통해 MCP 세션이 자동으로 종료됩니다.
+
 ### 🐳 Docker 배포
 
 프로덕션 또는 테스트 환경에서 빠르게 ChillMCP를 기동하려면 Docker 이미지를
