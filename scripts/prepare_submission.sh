@@ -69,14 +69,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-TMP_ARCHIVE=$(mktemp)
+TMP_ARCHIVE=$(mktemp "${TMPDIR:-/tmp}/prepare_submission.XXXXXX")
 
 tar -czf "$TMP_ARCHIVE" -C "$PROJECT_ROOT" .
 
 mv "$TMP_ARCHIVE" "$ARCHIVE_PATH"
 TMP_ARCHIVE=""
 
-TMP_EXTRACT_DIR=$(mktemp -d)
+TMP_EXTRACT_DIR=$(mktemp -d "${TMPDIR:-/tmp}/prepare_submission.XXXXXX")
 
 tar -xzf "$ARCHIVE_PATH" -C "$TMP_EXTRACT_DIR"
 
