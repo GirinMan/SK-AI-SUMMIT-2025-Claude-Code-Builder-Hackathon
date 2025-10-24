@@ -180,9 +180,16 @@ class ChillServer:
             """최신 밈 감상으로 기분 전환."""
 
             return await self.state.perform_break(
-                "Downloaded the freshest meme from the office group chat.",
+                "Pulled the freshest Allibeans workflow meme from the office group chat.",
                 (5, 12),
-                "Meme Quality: 😂 Certified dopamine booster.",
+                (
+                    "Meme Quality: 😂 Certified drip straight from the team uniforms.\n"
+                    "Allibeans Workflow Mantra:\n"
+                    "    .find(World.problem)\n"
+                    "    .then(Solution.research)\n"
+                    "    .catch(Coffee.drink)\n"
+                    "    .finally(Solution.run)"
+                ),
             )
 
         @self.mcp.tool()
