@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import math
 import random
 import time
@@ -84,11 +85,14 @@ class BreakRoutine:
         return state.rng.choice(self.scenarios)
 
 
+logger = logging.getLogger("ChillMCP")
+
+
 @dataclass
 class ChillState:
     """ChillMCP 서버가 관리하는 실시간 상태를 보관한다."""
 
-    stress_level: float = 35.0
+    stress_level: float = 0.0
     boss_alert_level: int = 0
     boss_alertness: int = 35
     boss_alertness_cooldown: int = 120
@@ -205,10 +209,10 @@ class ChillState:
             tool_label = scenario.headline
 
         state_before = self._snapshot_state()
-        print(
-            "[ChillMCP][tool="
-            f"{tool_label}] before state: "
-            f"{self._format_state(state_before)}"
+        logger.info(
+            "[tool=%s] before state: %s",
+            tool_label,
+            self._format_state(state_before),
         )
 
         self.tick()
@@ -261,10 +265,10 @@ class ChillState:
         )
 
         state_after = self._snapshot_state()
-        print(
-            "[ChillMCP][tool="
-            f"{tool_label}] after state: "
-            f"{self._format_state(state_after)}"
+        logger.info(
+            "[tool=%s] after state: %s",
+            tool_label,
+            self._format_state(state_after),
         )
 
         return {"content": [{"type": "text", "text": payload_text}]}

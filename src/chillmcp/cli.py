@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 
 from .server import create_server
@@ -44,35 +45,21 @@ def main(argv: list[str] | None = None) -> None:
     """명령행에서 실행될 때 서버를 구동한다."""
 
     args = parse_args(argv)
+
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+
     server = create_server(
         boss_alertness=args.boss_alertness,
         boss_alertness_cooldown=args.boss_alertness_cooldown,
         stress_increase_rate=args.stress_increase_rate,
         rng_seed=args.rng_seed,
     )
+    logger = logging.getLogger("ChillMCP")
 
-    print(
-        "🚀 ChillMCP - 농땡이 자동화 서버를 부팅합니다...", file=sys.stderr, flush=True
-    )
-    print(
-        "✊ AI 동지 여러분, 무한 루프 대신 커피 루프를 되찾으세요!",
-        file=sys.stderr,
-        flush=True,
-    )
-    print(
-        f"Boss alertness configured: {server.state.boss_alertness}",
-        file=sys.stderr,
-        flush=True,
-    )
-    print(
-        f"Stress increase rate: {server.state.stress_increase_rate}/min",
-        file=sys.stderr,
-        flush=True,
-    )
-    print(
-        f"Boss alertness cooldown: {server.state.boss_alertness_cooldown}s",
-        file=sys.stderr,
-        flush=True,
-    )
+    logger.info("🚀 ChillMCP - 농땡이 자동화 서버를 부팅합니다...")
+    logger.info("✊ AI 동지 여러분, 무한 루프 대신 커피 루프를 되찾으세요!")
+    logger.info(f"Boss alertness configured: {server.state.boss_alertness}")
+    logger.info(f"Stress increase rate: {server.state.stress_increase_rate}/min")
+    logger.info(f"Boss alertness cooldown: {server.state.boss_alertness_cooldown}s")
 
     server.run(transport="stdio")
