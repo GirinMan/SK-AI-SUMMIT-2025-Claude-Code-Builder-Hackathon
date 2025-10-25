@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+import atexit
 import json
 import os
+from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, List
@@ -153,6 +156,49 @@ AGENT_PERSONAS: dict[str, AgentPersona] = {
 DEFAULT_AGENT_PERSONA = "pretend-pro"
 DEFAULT_AGENT_INSTRUCTIONS = AGENT_PERSONAS[DEFAULT_AGENT_PERSONA].instructions
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_AGENT_EVENT_LOOP: asyncio.AbstractEventLoop | None = None
+_MCP_SERVER: MCPServerStdio | None = None
+
+
+def _get_agent_event_loop() -> asyncio.AbstractEventLoop:
+    """Return a reusable event loop dedicated to the Streamlit demo."""
+
+    global _AGENT_EVENT_LOOP
+    if _AGENT_EVENT_LOOP is None or _AGENT_EVENT_LOOP.is_closed():
+        _AGENT_EVENT_LOOP = asyncio.new_event_loop()
+    return _AGENT_EVENT_LOOP
+
+
+async def _reset_mcp_server() -> None:
+    """Tear down the cached MCP server if it exists."""
+
+    global _MCP_SERVER
+    if _MCP_SERVER is None:
+        return
+    with suppress(Exception):
+        await _MCP_SERVER.cleanup()
+    _MCP_SERVER = None
+
+
+def _cleanup_agent_runtime() -> None:
+    """Ensure the reusable event loop and MCP server shut down on exit."""
+
+    global _AGENT_EVENT_LOOP
+    if _AGENT_EVENT_LOOP is None or _AGENT_EVENT_LOOP.is_closed():
+        return
+    try:
+        _AGENT_EVENT_LOOP.run_until_complete(_reset_mcp_server())
+    except Exception:
+        # Best-effort cleanup; suppress errors so shutdown continues.
+        pass
+    finally:
+        _AGENT_EVENT_LOOP.close()
+        _AGENT_EVENT_LOOP = None
+
+
+atexit.register(_cleanup_agent_runtime)
+
 
 def get_agent_persona(slug: str) -> AgentPersona:
     return AGENT_PERSONAS.get(slug, AGENT_PERSONAS[DEFAULT_AGENT_PERSONA])
@@ -186,35 +232,61 @@ def _ensure_api_key() -> str:
     return api_key
 
 
-async def run_agent_once(prompt: str, instructions: str | None = None) -> RunResult:
-    """Invoke the ChillMCP companion once for the provided prompt."""
+async def _ensure_mcp_server() -> MCPServerStdio:
+    """Create (or reuse) a connected MCP server without restarting it per run."""
 
-    _ensure_api_key()
-    project_root = Path(__file__).resolve().parent.parent
+    global _MCP_SERVER
+    if _MCP_SERVER is not None:
+        process = getattr(_MCP_SERVER, "process", None) or getattr(
+            _MCP_SERVER, "_process", None
+        )
+        if process is not None and getattr(process, "returncode", None) is not None:
+            await _reset_mcp_server()
+        else:
+            return _MCP_SERVER
+
     server = MCPServerStdio(
         {
             "command": "python",
-            "args": ["-u", str(project_root / "main.py")],
-            "cwd": str(project_root),
+            "args": ["-u", str(_PROJECT_ROOT / "main.py")],
+            "cwd": str(_PROJECT_ROOT),
         },
         cache_tools_list=True,
         name="ChillMCP stdio server",
-        client_session_timeout_seconds=60.0,  # MCP tool 호출 timeout을 30초로 설정
+        client_session_timeout_seconds=60.0,
     )
+    await server.connect()
+    _MCP_SERVER = server
+    return server
+
+
+async def _run_agent_once(prompt: str, instructions: str | None = None) -> RunResult:
+    """Internal coroutine that relies on the persistent MCP server."""
+
+    _ensure_api_key()
+    server = await _ensure_mcp_server()
     instructions_text = instructions or DEFAULT_AGENT_INSTRUCTIONS
 
-    await server.connect()
+    agent = Agent(
+        name="Chill-Companion",
+        instructions=instructions_text,
+        mcp_servers=[server],
+        model="gpt-4.1",
+    )
+    context = ChillRunContext()
+    return await Runner.run(agent, prompt, context=context)
+
+
+def run_agent_once(prompt: str, instructions: str | None = None) -> RunResult:
+    """Synchronously invoke the agent using a shared MCP server instance."""
+
+    loop = _get_agent_event_loop()
     try:
-        agent = Agent(
-            name="Chill-Companion",
-            instructions=instructions_text,
-            mcp_servers=[server],
-            model="gpt-4.1",
-        )
-        context = ChillRunContext()
-        return await Runner.run(agent, prompt, context=context)
-    finally:
-        await server.cleanup()
+        return loop.run_until_complete(_run_agent_once(prompt, instructions))
+    except Exception:
+        # Reset the server so subsequent attempts can recover gracefully.
+        loop.run_until_complete(_reset_mcp_server())
+        raise
 
 
 def collect_tool_activity_entries(

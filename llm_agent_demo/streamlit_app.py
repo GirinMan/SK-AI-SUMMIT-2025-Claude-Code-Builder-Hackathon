@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import time
@@ -305,9 +304,7 @@ def run_streamlit_app() -> None:
 
             start_time = time.perf_counter()
             try:
-                result = asyncio.run(
-                    run_agent_once(transcript, instructions=effective_instructions)
-                )
+                result = run_agent_once(transcript, instructions=effective_instructions)
             except Exception as exc:
                 status_placeholder.empty()
                 st.error(f"상담 실행 중 오류가 발생했습니다: {exc}")
