@@ -18,7 +18,7 @@ ChillMCP는 Python 기반 [FastMCP](https://github.com/modelcontextprotocol/fast
 2. 기본 의존성은 `pip install -r requirements.txt`로 설치합니다. 자동 테스트를 함께 운영하려면 `pip install -r requirements-pytest.txt`를 추가로 실행합니다.
 3. 서버를 실행할 호스트(컨테이너 또는 VM)에 최소 128MB RAM과 stdio로 MCP 서버를 띄울 수 있는 환경을 마련합니다.
 4. stdout/stderr 로그 수집을 위해 선호하는 관측 도구(CloudWatch, Stackdriver, Loki 등)를 구성합니다.
-5. 조직 정책에 맞게 `--boss_alertness`, `--boss_alertness_cooldown`, `--stress-increase-rate` 기본값을 결정합니다.
+5. 조직 정책에 맞게 필수 인자인 `--boss_alertness`, `--boss_alertness_cooldown` 기본값을 결정합니다. (추가 플래그인 `--stress-increase-rate`, `--rng_seed`는 필요에 따라 선택적으로 사용하세요.)
 6. 필요하다면 systemd, Docker, Kubernetes Job 등 감독 프로세스로 감싸 자동 재시작을 구성합니다.
 
 ## 3. 런타임 설정
@@ -29,8 +29,8 @@ ChillMCP는 Escalation 동작을 조절하는 네 가지 CLI 플래그를 제공
 | --- | --- | --- | --- |
 | `--boss_alertness` | int (0-100) | 35 | 휴식 도구 실행 후 Boss Alert Level이 증가할 확률(%) |
 | `--boss_alertness_cooldown` | int (seconds) | 120 | 휴식 도구가 실행되지 않을 때 Boss Alert Level이 1 감소하는 주기 |
-| `--stress-increase-rate` | int (1-100) | 1 | 휴식을 취하지 않을 때 분당 누적되는 스트레스 수치 |
-| `--rng_seed` | int | `None` | 재현 가능한 테스트를 위한 랜덤 시드 |
+| `--stress-increase-rate` | int (1-100) | 1 | 휴식을 취하지 않을 때 분당 누적되는 스트레스 수치 *(선택적 – 테스트 튜닝용)* |
+| `--rng_seed` | int | `None` | 재현 가능한 테스트를 위한 랜덤 시드 *(선택적 – 테스트 튜닝용)* |
 
 예: 매니저 감시가 심하고 Alert 감소 속도가 빠른 환경에서 실행
 
@@ -38,7 +38,7 @@ ChillMCP는 Escalation 동작을 조절하는 네 가지 CLI 플래그를 제공
 python main.py --boss_alertness 90 --boss_alertness_cooldown 30 --stress-increase-rate 4
 ```
 
-난수 시드를 고정하고 싶다면 `--rng_seed 2025`와 같이 추가합니다.
+Stress 누적 속도를 실험하거나 재현 테스트를 하고 싶다면 `--stress-increase-rate`, `--rng_seed`를 필요할 때만 추가로 넘기면 됩니다.
 
 ## 4. 도구 카탈로그
 

@@ -14,8 +14,8 @@
 | Boss Alert Level 5 도달 시 20초 지연 | `ChillState.perform_break` | `tests/test_chillmcp.py::test_boss_alert_level_triggers_delay` |
 | `--boss_alertness` 파라미터 (기본 35) | `parse_args`, `ChillServer.__init__` | `tests/test_chillmcp.py::test_cli_arguments_are_logged` |
 | `--boss_alertness_cooldown` 파라미터 (기본 120초) | `parse_args`, `ChillState._apply_boss_cooldown` | `tests/test_chillmcp.py::test_cli_arguments_are_logged`, `tests/test_chillmcp.py::test_boss_alert_cooldown_reduces_level` |
-| `--stress-increase-rate` 파라미터 (기본 1/min) | `parse_args`, `ChillState` | `tests/test_chillmcp.py::test_cli_arguments_are_logged`, `tests/test_chillmcp.py::test_stress_increases_over_time` |
-| `--rng_seed` 파라미터 | `parse_args`, `ChillState.__post_init__` | 수동 실행(시드 고정) 또는 평가 스크립트 |
+| `--stress-increase-rate` 파라미터 (기본 1/min) | `parse_args`, `ChillState` | `tests/test_chillmcp.py::test_cli_arguments_are_logged`, `tests/test_chillmcp.py::test_stress_increases_over_time` *(선택 기능 – 테스트 편의)* |
+| `--rng_seed` 파라미터 | `parse_args`, `ChillState.__post_init__` | 수동 실행(시드 고정) 또는 평가 스크립트 *(선택 기능 – 테스트 편의)* |
 | Boss Alert Level 자동 감소 | `ChillState._apply_boss_cooldown` | `tests/test_chillmcp.py::test_boss_alert_cooldown_reduces_level` |
 | 응답 파싱 필드 포함 | `ChillState.perform_break` | `tests/test_chillmcp.py::test_tool_response_format` |
 | 연속 휴식 시 Boss Alert 상승 | `ChillState.perform_break` | `tests/test_chillmcp.py::test_consecutive_tool_calls_raise_boss_alert` |
@@ -43,7 +43,8 @@
 
 ## 채점 기준별 요약
 
-- **커맨드라인 파라미터 지원 (필수)**: `parse_args` 구현과 CLI 로그 테스트로 확인 (`--boss_alertness`, `--boss_alertness_cooldown`, `--stress-increase-rate`, `--rng_seed`).
+- **커맨드라인 파라미터 지원 (필수)**: `parse_args` 구현과 CLI 로그 테스트로 확인 (`--boss_alertness`, `--boss_alertness_cooldown`).
+- **참고:** `--stress-increase-rate`와 `--rng_seed`는 개발 및 평가 편의를 위한 선택 플래그로, 구현 여부가 필수 요건에는 포함되지 않습니다.
 - **기능 완성도 (40%)**: 11개 도구 구현, 응답 형식 보장, `agent_example.py`를 통한 실제 호출 예시 제공.
 - **상태 관리 (30%)**: 스트레스 증가/감소, Boss Alert 상승/감소, 20초 지연 로직 모두 테스트로 검증.
 - **창의성 (20%)**: 보너스 루틴, 디테일 메시지, 운영/호스트 문서를 통해 테마 확장.

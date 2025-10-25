@@ -16,7 +16,7 @@ python main.py \
   --rng_seed 2025
 ```
 
-`--rng_seed`는 선택 사항이며, 평가 환경에서 재현성을 확보하고 싶을 때만 지정합니다. Docker 이미지를 사용할 경우 동일한 인자를 컨테이너 실행 명령 뒤에 그대로 추가하면 됩니다.
+`--boss_alertness`와 `--boss_alertness_cooldown`이 핵심 필수 인자이며, `--stress-increase-rate`, `--rng_seed`는 개발/테스트 편의를 위한 선택 플래그입니다. Docker 이미지를 사용할 경우 동일한 인자를 컨테이너 실행 명령 뒤에 그대로 추가하면 됩니다.
 
 ## Claude Desktop
 
@@ -100,7 +100,7 @@ OpenAI의 MCP 호환 클라이언트(예: ChatGPT 데스크톱 프리뷰)는 설
 ### 팁
 
 - 샌드박스 데스크톱 앱에서는 절대 경로가 필요합니다.
-- Alert 동작을 조정하려면 `args` 배열에 `"--stress-increase-rate", "2"`나 `"--rng_seed", "2025"`를 추가합니다.
+- Alert 동작을 조정하려면 필요할 때만 `args` 배열에 `"--stress-increase-rate", "2"`나 `"--rng_seed", "2025"`와 같은 선택 플래그를 추가합니다.
 
 ## Generic FastMCP Clients
 
