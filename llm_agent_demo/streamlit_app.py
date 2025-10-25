@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import time
 from typing import Any, Dict, Iterable, List
@@ -105,21 +106,37 @@ def _render_payload(payload: Dict[str, Any]) -> None:
 
 
 def _render_tool_activity(entries: Iterable[Dict[str, Any]]) -> None:
+    def _render_tool_result(result_payload: Dict[str, Any]) -> None:
+        text_content = result_payload.get("json").get("text", "")
+        parsed = json.loads(text_content)
+
+        if isinstance(parsed, dict) and isinstance(parsed.get("content"), list):
+            for block in parsed["content"]:
+                if not isinstance(block, dict):
+                    continue
+                block_type = block.get("type")
+                if block_type == "text":
+                    # Replace single newlines with markdown line breaks for readability.
+                    block_text = block.get("text", "")
+                    st.markdown(block_text.replace("\n", "  \n"))
+                else:
+                    st.json(block)
+        elif parsed is not None:
+            st.json(parsed)
+        else:
+            st.caption("(결과 비어 있음)")
+
     for entry in entries:
         label = entry.get("label", "tool-call")
-        arguments_payload = entry.get("arguments", {})
         results = entry.get("results", [])
 
         with st.container(border=True):
             st.markdown(f"**{label}**")
-            st.caption("요청 매개변수")
-            _render_payload(arguments_payload)
-
             if results:
                 for idx, result_payload in enumerate(results, start=1):
                     caption_label = "결과" if len(results) == 1 else f"결과 {idx}"
                     st.caption(caption_label)
-                    _render_payload(result_payload)
+                    _render_tool_result(result_payload)
             else:
                 st.caption("도구 결과 없음")
 

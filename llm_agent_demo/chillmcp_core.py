@@ -328,14 +328,15 @@ def collect_tool_activity_entries(
     for item in result.new_items:
         if isinstance(item, ToolCallItem):
             label = _build_tool_label(item.raw_item)
-            call_id = getattr(item.raw_item, "call_id", None) or getattr(
-                item.raw_item, "id", None
-            )
+            call_identifiers = _extract_call_identifiers(item.raw_item)
+            if not call_identifiers:
+                call_identifiers = _extract_call_identifiers(item)
+            primary_call_id = call_identifiers[0] if call_identifiers else None
             arguments_text = _extract_arguments(item.raw_item)
             arguments_json = _parse_json_text(arguments_text)
 
             entry = {
-                "id": call_id,
+                "id": primary_call_id,
                 "label": label,
                 "arguments": {
                     "text": arguments_text,
@@ -346,9 +347,8 @@ def collect_tool_activity_entries(
             entries.append(entry)
             last_entry = entry
 
-            if call_id:
-                call_lookup[call_id] = entry
-                call_lookup[str(call_id)] = entry
+            for call_id in call_identifiers:
+                call_lookup.setdefault(call_id, entry)
 
             inline_output = getattr(item.raw_item, "output", None)
             if inline_output not in (None, ""):
@@ -365,14 +365,20 @@ def collect_tool_activity_entries(
         elif isinstance(item, ToolCallOutputItem):
             output_payload = getattr(item.raw_item, "output", item.output)
             output_text, output_json = _normalize_tool_payload(output_payload)
-            call_id = getattr(item.raw_item, "call_id", None) or getattr(
-                item.raw_item, "id", None
-            )
-            entry = call_lookup.get(call_id)
-            if entry is None and call_id:
-                entry = call_lookup.get(str(call_id))
+            call_identifiers = _extract_call_identifiers(item.raw_item)
+            if not call_identifiers:
+                call_identifiers = _extract_call_identifiers(item)
 
-            if entry is None and last_entry is not None:
+            entry: dict[str, Any] | None = None
+            for call_id in call_identifiers:
+                entry = call_lookup.get(call_id)
+                if entry is not None:
+                    break
+
+            if entry is None:
+                entry = next((candidate for candidate in entries if not candidate["results"]), None)
+
+            if entry is None:
                 entry = last_entry
 
             _record_break_history(context, output_text)
@@ -385,10 +391,12 @@ def collect_tool_activity_entries(
 
             if entry is not None:
                 entry["results"].append(result_entry)
+                for call_id in call_identifiers:
+                    call_lookup.setdefault(call_id, entry)
                 last_entry = entry
             else:
                 fallback_entry = {
-                    "id": call_id,
+                    "id": call_identifiers[0] if call_identifiers else None,
                     "label": "tool-call",
                     "arguments": {
                         "text": "{}",
@@ -397,8 +405,8 @@ def collect_tool_activity_entries(
                     "results": [result_entry],
                 }
                 entries.append(fallback_entry)
-                if call_id:
-                    call_lookup[str(call_id)] = fallback_entry
+                for call_id in call_identifiers:
+                    call_lookup.setdefault(call_id, fallback_entry)
                 last_entry = fallback_entry
 
     return entries
@@ -470,6 +478,46 @@ def _extract_arguments(raw_item: Any) -> str:
 def _record_break_history(context: Any, output_text: str) -> None:
     if isinstance(context, ChillRunContext):
         context.completed_breaks.append(output_text)
+
+
+def _extract_call_identifiers(source: Any) -> List[str]:
+    identifiers: List[str] = []
+    if source is None:
+        return identifiers
+
+    def _append_identifier(value: Any) -> None:
+        if value is None:
+            return
+        text = str(value)
+        if not text:
+            return
+        if text not in identifiers:
+            identifiers.append(text)
+
+    attribute_candidates = (
+        "call_id",
+        "tool_call_id",
+        "id",
+        "callId",
+        "toolCallId",
+    )
+    for attr in attribute_candidates:
+        value = getattr(source, attr, None)
+        if value is None and isinstance(source, dict):
+            value = source.get(attr)
+        _append_identifier(value)
+
+    if isinstance(source, dict):
+        nested = source.get("tool_call")
+    else:
+        nested = getattr(source, "tool_call", None)
+
+    if nested is not None and nested is not source:
+        for ident in _extract_call_identifiers(nested):
+            if ident not in identifiers:
+                identifiers.append(ident)
+
+    return identifiers
 
 
 def _parse_json_text(text: str | None) -> Any:
