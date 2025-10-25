@@ -10,10 +10,9 @@ from typing import Any, Dict, Iterable, List
 import streamlit as st
 
 from llm_agent_demo.chillmcp_core import (
-    ChillRunContext,
     DEFAULT_AGENT_PERSONA,
+    collect_tool_activity_entries,
     get_agent_persona,
-    iterate_tool_activity,
     list_agent_personas,
     run_agent_once,
 )
@@ -81,6 +80,48 @@ def _stream_markdown(
         if end >= len(text):
             break
     placeholder.markdown(final_text)
+
+
+def _looks_like_json(text: str) -> bool:
+    stripped = text.strip()
+    return (stripped.startswith("{") and stripped.endswith("}")) or (
+        stripped.startswith("[") and stripped.endswith("]")
+    )
+
+
+def _render_payload(payload: Dict[str, Any]) -> None:
+    json_payload = payload.get("json") if isinstance(payload, dict) else None
+    text_payload = payload.get("text", "") if isinstance(payload, dict) else ""
+
+    if json_payload not in (None, ""):
+        st.json(json_payload)
+        return
+
+    if text_payload:
+        language = "json" if _looks_like_json(text_payload) else "text"
+        st.code(text_payload, language=language)
+    else:
+        st.caption("(비어 있음)")
+
+
+def _render_tool_activity(entries: Iterable[Dict[str, Any]]) -> None:
+    for entry in entries:
+        label = entry.get("label", "tool-call")
+        arguments_payload = entry.get("arguments", {})
+        results = entry.get("results", [])
+
+        with st.container(border=True):
+            st.markdown(f"**{label}**")
+            st.caption("요청 매개변수")
+            _render_payload(arguments_payload)
+
+            if results:
+                for idx, result_payload in enumerate(results, start=1):
+                    caption_label = "결과" if len(results) == 1 else f"결과 {idx}"
+                    st.caption(caption_label)
+                    _render_payload(result_payload)
+            else:
+                st.caption("도구 결과 없음")
 
 
 def run_streamlit_app() -> None:
@@ -163,18 +204,18 @@ def run_streamlit_app() -> None:
                 st.markdown(message["content"])
                 if role == "assistant":
                     st.caption(f"⏱️ 처리 시간: {message['duration']:.2f}초")
-                    activity_lines = message.get("activity_lines", [])
-                    if activity_lines:
+                    activity_entries = message.get("activity_entries")
+                    if activity_entries:
                         with st.expander("MCP 도구 활동 기록", expanded=False):
-                            for line in activity_lines:
-                                st.markdown(f"- {line}")
+                            _render_tool_activity(activity_entries)
                     else:
-                        st.caption("도구 호출 기록 없음")
-                    breaks = message.get("breaks", [])
-                    if breaks:
-                        with st.expander("휴식 로그", expanded=False):
-                            for idx, log in enumerate(breaks, start=1):
-                                st.write(f"{idx}. {log}")
+                        legacy_lines = message.get("activity_lines", [])
+                        if legacy_lines:
+                            with st.expander("MCP 도구 활동 기록", expanded=False):
+                                for line in legacy_lines:
+                                    st.markdown(f"- {line}")
+                        else:
+                            st.caption("도구 호출 기록 없음")
                     usage = message.get("usage")
                     if usage:
                         st.caption(
@@ -245,18 +286,14 @@ def run_streamlit_app() -> None:
             _stream_markdown(result.final_output, stream_placeholder)
 
             context = result.context_wrapper.context
-            activity_lines = list(iterate_tool_activity(result, context))
+            activity_entries = collect_tool_activity_entries(result, context)
             usage = result.context_wrapper.usage
-            break_logs: List[str] = []
-            if isinstance(context, ChillRunContext):
-                break_logs = list(context.completed_breaks)
 
             st.caption(f"⏱️ 처리 시간: {duration:.2f}초")
 
-            if activity_lines:
+            if activity_entries:
                 with st.expander("MCP 도구 활동 기록", expanded=False):
-                    for line in activity_lines:
-                        st.markdown(f"- {line}")
+                    _render_tool_activity(activity_entries)
             else:
                 st.caption("도구 호출 기록 없음")
 
@@ -267,23 +304,17 @@ def run_streamlit_app() -> None:
                 col3.metric("출력 토큰", usage.output_tokens)
                 col4.metric("총 토큰", usage.total_tokens)
 
-            if break_logs:
-                with st.expander("휴식 로그", expanded=False):
-                    for idx, log in enumerate(break_logs, start=1):
-                        st.write(f"{idx}. {log}")
-
         assistant_entry = {
             "role": "assistant",
             "content": result.final_output,
             "duration": duration,
-            "activity_lines": activity_lines,
+            "activity_entries": activity_entries,
             "usage": {
                 "requests": usage.requests,
                 "input_tokens": usage.input_tokens,
                 "output_tokens": usage.output_tokens,
                 "total_tokens": usage.total_tokens,
             },
-            "breaks": break_logs,
             "persona_slug": persona.slug,
             "instructions": effective_instructions,
         }
