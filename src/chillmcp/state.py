@@ -15,10 +15,57 @@ PostHook = Callable[["ChillState"], None]
 AsyncSleepFn = Callable[[float], Awaitable[None]]
 
 
+@dataclass(frozen=True)
+class RoutineScenario:
+    """각 휴식 루틴에서 선택될 수 있는 개별 시나리오."""
+
+    headline: str
+    stress_reduction: Tuple[int, int]
+    detail_lines: ExtraLineFactory | Sequence[str] | None = None
+
+    def render_details(self, state: "ChillState") -> Sequence[str]:
+        """시나리오에 연결된 세부 문장을 생성한다."""
+
+        if self.detail_lines is None:
+            return ()
+        if callable(self.detail_lines):
+            return tuple(self.detail_lines(state))
+        return tuple(self.detail_lines)
+
+
 def clamp(value: float, minimum: float, maximum: float) -> float:
     """값을 주어진 구간 ``[minimum, maximum]`` 안으로 고정한다."""
 
     return max(minimum, min(value, maximum))
+
+
+def _merge_detail_sources(
+    sources: Sequence[str | ExtraLineFactory | Sequence[str]],
+) -> Sequence[str] | ExtraLineFactory:
+    """여러 디테일 소스를 하나의 팩토리로 통합한다."""
+
+    flattened: list[str] = []
+    factories: list[ExtraLineFactory] = []
+
+    for source in sources:
+        if callable(source):
+            factories.append(source)
+        elif isinstance(source, str):
+            flattened.append(source)
+        else:
+            flattened.extend(source)
+
+    if not factories:
+        return tuple(flattened)
+
+    def factory(state: "ChillState") -> Sequence[str]:
+        lines: list[str] = []
+        lines.extend(flattened)
+        for item in factories:
+            lines.extend(item(state))
+        return tuple(lines)
+
+    return factory
 
 
 @dataclass(frozen=True)
@@ -26,20 +73,15 @@ class BreakRoutine:
     """휴식 도구에 필요한 정보를 한곳에 모은 데이터 클래스."""
 
     name: str
-    summary: str
-    stress_reduction: Tuple[int, int]
-    flavour_text: str
-    extra_lines: ExtraLineFactory | Sequence[str] | None = None
+    scenarios: Sequence[RoutineScenario]
     post_hook: PostHook | None = None
 
-    def render_extra_lines(self, state: "ChillState") -> Sequence[str]:
-        """추가 안내 문장을 생성한다."""
+    def select_scenario(self, state: "ChillState") -> RoutineScenario:
+        """상태 기반 랜덤 시나리오를 선택한다."""
 
-        if self.extra_lines is None:
-            return ()
-        if callable(self.extra_lines):
-            return tuple(self.extra_lines(state))
-        return tuple(self.extra_lines)
+        if not self.scenarios:
+            raise ValueError(f"Routine '{self.name}'에 등록된 시나리오가 없습니다.")
+        return state.rng.choice(self.scenarios)
 
 
 @dataclass
@@ -118,22 +160,29 @@ class ChillState:
         *,
         extra_lines: ExtraLineFactory | Sequence[str] | None = None,
         post_hook: PostHook | None = None,
-    ) -> str:
-        """휴식 루틴을 실행하고 결과 문자열을 반환한다."""
+    ) -> dict[str, object]:
+        """휴식 루틴을 실행하고 결과 메시지를 반환한다."""
 
         if isinstance(routine, BreakRoutine):
             selected_routine = routine
+            scenario = selected_routine.select_scenario(self)
         else:
-            if stress_reduction is None or flavour_text is None:
-                raise TypeError(
-                    "요약, 스트레스 감소 범위, 분위기 문구를 모두 지정해야 합니다."
-                )
+            if stress_reduction is None:
+                raise TypeError("스트레스 감소 범위를 지정해야 합니다.")
+            details: list[str | ExtraLineFactory | Sequence[str]] = []
+            if flavour_text:
+                details.append(flavour_text)
+            if extra_lines is not None:
+                details.append(extra_lines)
+
+            scenario = RoutineScenario(
+                headline=routine,
+                stress_reduction=stress_reduction,
+                detail_lines=_merge_detail_sources(details),
+            )
             selected_routine = BreakRoutine(
                 name="custom",
-                summary=routine,
-                stress_reduction=stress_reduction,
-                flavour_text=flavour_text,
-                extra_lines=extra_lines,
+                scenarios=(scenario,),
                 post_hook=post_hook,
             )
 
@@ -145,7 +194,7 @@ class ChillState:
             await sleep_fn(20)
             self.tick()
 
-        reduction_amount = self.rng.randint(*selected_routine.stress_reduction)
+        reduction_amount = self.rng.randint(*scenario.stress_reduction)
         self.stress_level = clamp(
             self.stress_level - reduction_amount, 0, self.max_stress
         )
@@ -164,19 +213,26 @@ class ChillState:
             selected_routine.post_hook(self)
 
         stress_value = math.floor(self.stress_level + 0.5)
-
-        lines = [
-            f"Break Summary: {selected_routine.summary}",
-            f"Stress Level: {stress_value}",
-            f"Boss Alert Level: {self.boss_alert_level}",
-            selected_routine.flavour_text,
-        ]
-
-        lines.extend(selected_routine.render_extra_lines(self))
-
+        summary_parts = [scenario.headline]
+        summary_parts.extend(scenario.render_details(self))
         if boss_noticed:
-            lines.append("Boss Radar: 👀 상사가 뭔가 감지했습니다. 연막탄 준비!")
+            summary_parts.append(
+                "Boss Alert 상승 ⚠️ 상사가 휴식을 눈치채 경보가 한 단계 올랐습니다"
+            )
         elif self.boss_alert_level == 0:
-            lines.append("Boss Radar: ✅ 안전 지대 확보 완료.")
+            summary_parts.append("Boss Alert 안정 ✅ 현재 경보는 0단계입니다")
+        else:
+            summary_parts.append(
+                f"Boss Alert 주의 🟡 경보 {self.boss_alert_level}단계에서 유지 중입니다"
+            )
 
-        return "\n".join(lines)
+        sanitized_parts = [part.replace(":", " -") for part in summary_parts if part]
+        summary_text = " | ".join(sanitized_parts)
+
+        payload_text = (
+            f"Break Summary: {summary_text}\n"
+            f"Stress Level: {stress_value}\n"
+            f"Boss Alert Level: {self.boss_alert_level}"
+        )
+
+        return {"content": [{"type": "text", "text": payload_text}]}

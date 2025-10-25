@@ -85,7 +85,7 @@ pip install -r requirements-test.txt
 python main.py
 
 # 테스트를 위한 커스텀 파라미터 설정
-python main.py --boss_alertness 80 --boss_alertness_cooldown 60
+python main.py --boss_alertness 80 --boss_alertness_cooldown 60 --stress-increase-rate 3
 ```
 
 ### Tech Stack

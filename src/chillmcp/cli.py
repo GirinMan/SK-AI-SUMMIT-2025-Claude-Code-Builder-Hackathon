@@ -25,6 +25,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="보스 경보 수치가 1 감소하는 데 필요한 초 단위 시간.",
     )
     parser.add_argument(
+        "--stress-increase-rate",
+        dest="stress_increase_rate",
+        type=int,
+        default=1,
+        help="휴식을 취하지 않을 때 1분마다 증가하는 스트레스 수치 (1-100).",
+    )
+    parser.add_argument(
         "--rng_seed",
         type=int,
         default=None,
@@ -40,6 +47,7 @@ def main(argv: list[str] | None = None) -> None:
     server = create_server(
         boss_alertness=args.boss_alertness,
         boss_alertness_cooldown=args.boss_alertness_cooldown,
+        stress_increase_rate=args.stress_increase_rate,
         rng_seed=args.rng_seed,
     )
 
@@ -58,6 +66,11 @@ def main(argv: list[str] | None = None) -> None:
     )
     print(
         f"Boss alertness cooldown: {server.state.boss_alertness_cooldown}s",
+        file=sys.stderr,
+        flush=True,
+    )
+    print(
+        f"Stress increase rate: {server.state.stress_increase_rate}/min",
         file=sys.stderr,
         flush=True,
     )
