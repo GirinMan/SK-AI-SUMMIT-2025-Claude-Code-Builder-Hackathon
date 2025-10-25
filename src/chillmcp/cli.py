@@ -29,7 +29,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--stress-increase-rate",
         dest="stress_increase_rate",
         type=int,
-        default=1,
+        default=10,
         help="휴식을 취하지 않을 때 1분마다 증가하는 스트레스 수치 (1-100).",
     )
     parser.add_argument(

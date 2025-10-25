@@ -16,7 +16,7 @@ class ChillServer:
         *,
         boss_alertness: int = 50,
         boss_alertness_cooldown: int = 300,
-        stress_increase_rate: int = 1,
+        stress_increase_rate: int = 10,
         rng_seed: int | None = None,
     ) -> None:
         boss_alertness = max(0, min(100, boss_alertness))
@@ -132,7 +132,7 @@ def create_server(
     *,
     boss_alertness: int = 50,
     boss_alertness_cooldown: int = 300,
-    stress_increase_rate: int = 1,
+    stress_increase_rate: int = 10,
     rng_seed: int | None = None,
 ) -> ChillServer:
     """외부에서 사용하기 위한 ChillServer 생성 팩토리."""

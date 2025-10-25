@@ -91,11 +91,11 @@ logger = logging.getLogger("ChillMCP")
 class ChillState:
     """ChillMCP 서버가 관리하는 실시간 상태를 보관한다."""
 
-    stress_level: int = 50
+    stress_level: float = 50.0
     boss_alert_level: int = 0
     boss_alertness: int = 50
     boss_alertness_cooldown: int = 300
-    stress_increase_rate: int = 1
+    stress_increase_rate: int = 10
     max_stress: int = 100
     max_boss_alert: int = 5
     rng_seed: int | None = None
@@ -127,11 +127,10 @@ class ChillState:
             return
 
         elapsed_seconds = now - self.last_update_time
-        stress_increment = elapsed_seconds * self.stress_increase_rate
+        stress_increment = elapsed_seconds * self.stress_increase_rate / 60
         if stress_increment > 0:
-            self.stress_level = int(
-                clamp(self.stress_level + stress_increment, 0, self.max_stress)
-            )
+            new_stress = self.stress_level + stress_increment
+            self.stress_level = clamp(new_stress, 0, self.max_stress)
             self.last_update_time = now
 
     def _apply_boss_cooldown(self, now: float) -> None:
@@ -207,14 +206,13 @@ class ChillState:
             )
             tool_label = scenario.headline
 
+        self.tick()
         state_before = self._snapshot_state()
         logger.info(
             "[tool=%s] before state: %s",
             tool_label,
             self._format_state(state_before),
         )
-
-        self.tick()
 
         if self.boss_alert_level >= self.max_boss_alert:
             # 상사가 바로 뒤에 있는 것 같으니, 20초 동안 일하는 척한다.
@@ -223,8 +221,8 @@ class ChillState:
             self.tick()
 
         reduction_amount = self.rng.randint(*scenario.stress_reduction)
-        self.stress_level = int(
-            clamp(self.stress_level - reduction_amount, 0, self.max_stress)
+        self.stress_level = clamp(
+            self.stress_level - reduction_amount, 0, self.max_stress
         )
 
         boss_alert_before = self.boss_alert_level
@@ -240,7 +238,7 @@ class ChillState:
         if selected_routine.post_hook is not None:
             selected_routine.post_hook(self)
 
-        stress_value = self.stress_level
+        stress_value = int(self.stress_level)
         summary_parts = [scenario.headline]
         summary_parts.extend(scenario.render_details(self))
         if boss_noticed:
