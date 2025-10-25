@@ -1,40 +1,44 @@
 # ChillMCP 운영 및 활용 가이드
 
-이 문서는 ChillMCP FastMCP 서버를 프로덕션 환경에서 운용하는 방법을 설명합니다. 지원하는 주요 유스 케이스, 연동 지점, 런타임 설정, 유지보수 흐름을 정리하여 플랫폼 운영자와 에이전트 엔지니어가 내부/외부 사용자에게 서비스를 안정적으로 제공할 수 있도록 돕습니다.
+이 문서는 ChillMCP FastMCP 서버를 프로덕션 또는 내부 평가 환경에서 운용하는 방법을 설명합니다. 지원하는 주요 유스 케이스, 연동 지점, 런타임 설정, 유지보수 흐름을 정리하여 플랫폼 운영자와 에이전트 엔지니어가 사용자에게 서비스를 안정적으로 제공할 수 있도록 돕습니다.
 
 ## 1. 시스템 개요
 
-ChillMCP는 Python 기반 [FastMCP](https://github.com/modelcontextprotocol/fastmcp) 서버로, MCP(Model Context Protocol) 클라이언트에게 8가지 휴식 관리 도구를 제공합니다. 서버는 Stress Level과 Boss Alert Level을 추적하며, 에이전트가 즉시 휴식을 취할 수 있는지 혹은 지연이 필요한지를 결정합니다.
+ChillMCP는 Python 기반 [FastMCP](https://github.com/modelcontextprotocol/fastmcp) 서버로, MCP(Model Context Protocol) 클라이언트에게 11가지 휴식 관리 도구를 제공합니다. 서버는 Stress Level과 Boss Alert Level을 추적하며, 에이전트가 즉시 휴식을 취할 수 있는지 혹은 지연이 필요한지를 결정합니다.
 
 핵심 구성 요소:
 
-- **main.py** – FastMCP 서버, 내부 상태 머신, CLI 파서, 각 도구 구현 포함.
-- **agent_example.py** – stdio로 ChillMCP 서버에 연결하는 MCP 호환 LLM 에이전트 예제.
-- **tests/** – CLI 동작과 도구 시맨틱스를 검증하는 pytest 스위트.
+- **main.py** – FastMCP 서버 부팅, CLI 파서, 종료 처리 담당.
+- **src/chillmcp/** – `cli.py`, `server.py`, `state.py`, `routines.py`가 각각 명령행 파싱, 도구 등록, 상태 머신, 휴식 시나리오를 담당합니다.
+- **tests/test_chillmcp.py** – CLI 동작과 상태 머신 시맨틱스를 검증하는 pytest 스위트.
 
 ## 2. 배포 체크리스트
 
-1. Python 3.11을 설치하고 독립적인 가상환경을 준비합니다.
-2. `pip install -r requirements.txt`로 코어 의존성을 설치하고, 테스트를 실행할 예정이라면 `pip install -r requirements-test.txt`를 추가로 수행합니다.
-3. 서버를 실행할 호스트(컨테이너 또는 VM)에 최소 128MB RAM과 stdio로 MCP 서버를 띄울 수 있는 네트워크 환경을 마련합니다.
-4. 선호하는 관측 도구를 사용해 stdout/stderr 로그 수집을 구성합니다.
-5. 컴플라이언스 요구에 맞춰 `--boss_alertness`, `--boss_alertness_cooldown` 기본값을 결정합니다.
+1. Python 3.11 이상을 설치하고 독립적인 가상환경을 준비합니다.
+2. 기본 의존성은 `pip install -r requirements.txt`로 설치합니다. 자동 테스트를 함께 운영하려면 `pip install -r requirements-pytest.txt`를 추가로 실행합니다.
+3. 서버를 실행할 호스트(컨테이너 또는 VM)에 최소 128MB RAM과 stdio로 MCP 서버를 띄울 수 있는 환경을 마련합니다.
+4. stdout/stderr 로그 수집을 위해 선호하는 관측 도구(CloudWatch, Stackdriver, Loki 등)를 구성합니다.
+5. 조직 정책에 맞게 필수 인자인 `--boss_alertness`, `--boss_alertness_cooldown` 기본값을 결정합니다. (추가 플래그인 `--stress-increase-rate`, `--rng_seed`는 필요에 따라 선택적으로 사용하세요.)
 6. 필요하다면 systemd, Docker, Kubernetes Job 등 감독 프로세스로 감싸 자동 재시작을 구성합니다.
 
 ## 3. 런타임 설정
 
-ChillMCP는 Escalation 동작을 조절하는 두 가지 CLI 플래그를 제공합니다.
+ChillMCP는 Escalation 동작을 조절하는 네 가지 CLI 플래그를 제공합니다.
 
 | Flag | Type | Default | 설명 |
 | --- | --- | --- | --- |
-| `--boss_alertness` | int (0-100) | 50 | 휴식 도구 실행 후 Boss Alert Level이 증가할 확률(%) |
-| `--boss_alertness_cooldown` | int (seconds) | 300 | 휴식 도구가 실행되지 않을 때 Boss Alert Level이 1 감소하는 주기 |
+| `--boss_alertness` | int (0-100) | 35 | 휴식 도구 실행 후 Boss Alert Level이 증가할 확률(%) |
+| `--boss_alertness_cooldown` | int (seconds) | 120 | 휴식 도구가 실행되지 않을 때 Boss Alert Level이 1 감소하는 주기 |
+| `--stress-increase-rate` | int (1-100) | 1 | 휴식을 취하지 않을 때 분당 누적되는 스트레스 수치 *(선택적 – 테스트 튜닝용)* |
+| `--rng_seed` | int | `None` | 재현 가능한 테스트를 위한 랜덤 시드 *(선택적 – 테스트 튜닝용)* |
 
 예: 매니저 감시가 심하고 Alert 감소 속도가 빠른 환경에서 실행
 
 ```bash
-python main.py --boss_alertness 90 --boss_alertness_cooldown 30
+python main.py --boss_alertness 90 --boss_alertness_cooldown 30 --stress-increase-rate 4
 ```
+
+Stress 누적 속도를 실험하거나 재현 테스트를 하고 싶다면 `--stress-increase-rate`, `--rng_seed`를 필요할 때만 추가로 넘기면 됩니다.
 
 ## 4. 도구 카탈로그
 
@@ -50,12 +54,16 @@ python main.py --boss_alertness 90 --boss_alertness_cooldown 30
 | `urgent_call` | 의심 없이 자리 이탈 | 높은 스트레스 감소, 남용 시 위험 |
 | `deep_thinking` | 일하는 척 쉬기 | 균형 잡힌 스트레스 완화, Alert 중간 증가 |
 | `email_organizing` | 메일 정리 모드 | 스트레스 감소 폭 작음, Alert 회복용으로 활용 |
+| `virtual_chimaek` | 치맥 시뮬레이션 | 보너스 루틴, 스트레스 회복이 크지만 Alert 상승 확률도 존재 |
+| `emergency_clockout` | 긴급 퇴근 | 보너스 루틴, 스트레스와 Alert를 모두 0으로 리셋 |
+| `company_dinner` | 가상 회식 | 보너스 루틴, 스트레스 소폭 반등 후 팀 사기 연출 |
 
 ## 5. 상태 머신 동작
 
-- **Stress Level (0-100):** 유휴 상태에서는 자동으로 증가하고, 도구 실행 시 감소하며, 0 미만으로 내려가지 않습니다.
-- **Boss Alert Level (0-5):** 도구 실행 후 확률적으로 증가하고, Cooldown 타이머로 감소하며, 5에 도달하면 20초 지연이 적용됩니다.
-- 상태 전이는 프로세스 내에서만 유지되므로 서버를 재시작하면 Stress 50, Alert 0으로 초기화됩니다.
+- **Stress Level (0-100):** 유휴 상태에서는 `stress_increase_rate`에 따라 자동으로 증가하고, 도구 실행 시 감소하며, 0 미만으로 내려가지 않습니다.
+- **Boss Alert Level (0-5):** 도구 실행 후 `boss_alertness` 확률로 증가하고, Cooldown 타이머로 감소하며, 5에 도달하면 20초 지연이 적용됩니다.
+- **타임라인 동기화:** 상태 갱신은 `ChillState.tick()`을 통해 수행되며, 난수 시드를 지정하면 재현성이 확보됩니다.
+- **초기값:** 서버를 재시작하면 Stress 35, Alert 0으로 초기화됩니다.
 
 ## 6. 운영 유즈 케이스
 
@@ -70,7 +78,7 @@ python main.py --boss_alertness 90 --boss_alertness_cooldown 30
 
 - 트래픽이 낮은 시간대에는 `--boss_alertness`를 20~30 정도로 낮춰 휴식 빈도를 늘립니다.
 - 야간에는 Cooldown(예: 600초)을 늘려 Alert 감소가 너무 빠르지 않도록 조정합니다.
-- 도구 응답의 `stress` 값을 샘플링하여 대시보드에 반영합니다.
+- 도구 응답의 `Stress Level` 값을 샘플링하여 대시보드에 반영합니다.
 
 ### 6.3 인시던트 대응
 
@@ -83,7 +91,7 @@ python main.py --boss_alertness 90 --boss_alertness_cooldown 30
 ### 6.4 Human-in-the-Loop 리뷰
 
 - 주간 감사를 위해 도구 호출 로그를 수집합니다.
-- `tests/test_chillmcp.py::test_tool_usage_flow` 패턴을 참고하여 동일한 도구 호출을 스크립트로 재실행합니다.
+- `tests/test_chillmcp.py::test_take_a_break_tool_via_client` 패턴을 참고하여 동일한 도구 호출을 스크립트로 재실행합니다.
 - 재현 테스트를 통해 로그에 기록된 응답과 서버 동작이 일치하는지 확인합니다.
 
 ## 7. 연동 패턴
@@ -104,7 +112,7 @@ python main.py --boss_alertness 90 --boss_alertness_cooldown 30
 
 ### 7.3 스크립팅 및 자동화
 
-`tests/test_chillmcp.py`에서 사용한 `fastmcp.client` 유틸리티를 활용하면 스케줄러나 배치 작업으로 도구 호출을 자동화할 수 있습니다. 도구 시퀀스를 실행하고 반환된 markdown을 점검해 야간 감사나 Stress 초기화 작업을 수행하세요.
+`tests/test_chillmcp.py`에서 사용한 `fastmcp.Client` 유틸리티를 활용하면 스케줄러나 배치 작업으로 도구 호출을 자동화할 수 있습니다. 도구 시퀀스를 실행하고 반환된 markdown을 점검해 야간 감사나 Stress 초기화 작업을 수행하세요.
 
 ## 8. 테스트 및 품질 게이트
 
@@ -114,7 +122,7 @@ python main.py --boss_alertness 90 --boss_alertness_cooldown 30
 
 ## 9. 모니터링 및 관측성
 
-- **Logs:** stdout에는 각 도구 호출마다 Stress/Boss Alert 수준이 JSON 유사 형식으로 기록되므로 로그 수집기에 전달합니다.
+- **Logs:** stderr에는 부팅 시 구성값 로그, stdout에는 FastMCP 서버 로그가 출력됩니다. 수집기를 통해 중앙화하세요.
 - **Metrics:** 로그를 tail 하거나 Prometheus 지표를 내보내는 래퍼를 추가해 Stress, Boss Alert 값을 노출합니다.
 - **Alerting:** Boss Alert가 5분 이상 4 이상으로 유지되면 과도한 휴식 사용이므로 알림을 구성합니다.
 
@@ -138,7 +146,7 @@ docker push registry.example.com/agents/chillmcp:latest
 MCP 호스트에서 stdio를 연결하려면 다음과 같이 컨테이너를 실행합니다.
 
 ```bash
-docker run --rm -i chillmcp:latest --boss_alertness 65 --boss_alertness_cooldown 90
+docker run --rm -i chillmcp:latest --boss_alertness 65 --boss_alertness_cooldown 90 --stress-increase-rate 2
 ```
 
 - 필요한 경우 `--env` 플래그로 비밀값이나 환경 토글을 전달합니다.
@@ -163,7 +171,7 @@ docker run --rm -i chillmcp:latest --boss_alertness 65 --boss_alertness_cooldown
 | 도구 호출이 20초 이상 지연 | Boss Alert Level이 5에 도달 | Cooldown을 기다리거나 서버를 재시작해 상태를 초기화 |
 | Boss Alert가 감소하지 않음 | Cooldown 값이 너무 큼 | `--boss_alertness_cooldown` 값을 낮추고 재시작 |
 | 에이전트가 연결 불가 | stdout/stderr 파이프 미구성 | stdio transport로 프로세스를 생성하고 중간 래퍼가 없는지 확인 |
-| Stress가 항상 높음 | 도구 효과 부족 | `watch_netflix`, `urgent_call` 같은 강력한 도구 사용 및 Alert 확률 조정 |
+| Stress가 항상 높음 | 도구 효과 부족 또는 증가율 과다 | `watch_netflix`, `emergency_clockout` 등 강력한 루틴 사용 또는 `--stress-increase-rate` 조정 |
 
 ## 13. 변경 관리
 
@@ -176,3 +184,4 @@ docker run --rm -i chillmcp:latest --boss_alertness 65 --boss_alertness_cooldown
 - `README.md` – 미션 개요 및 상위 요구사항.
 - `agent_example.py` – MCP 호환 에이전트 연동 예시.
 - `tests/test_chillmcp.py` – 신규 기능 검증을 확장할 수 있는 테스트 시나리오.
+- `docs/MCP_HOST_INTEGRATIONS.md` – 주요 호스트 등록 절차.
