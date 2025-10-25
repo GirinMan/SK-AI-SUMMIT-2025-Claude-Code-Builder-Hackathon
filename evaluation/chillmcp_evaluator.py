@@ -32,8 +32,8 @@ class MCPClient:
 
     def __init__(
         self,
-        boss_alertness: int = 35,
-        boss_alertness_cooldown: int = 120,
+        boss_alertness: int = 50,
+        boss_alertness_cooldown: int = 300,
         rng_seed: Optional[int] = None,
     ):
         """서버 프로세스를 시작한다."""

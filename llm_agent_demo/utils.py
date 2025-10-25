@@ -6,7 +6,7 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterable, List, Optional
+from typing import Any, Iterable, List
 
 from dotenv import load_dotenv
 
@@ -28,32 +28,6 @@ class AgentPersona:
     instructions: str
     rest_index: int
     stealth_index: int
-
-
-@dataclass
-class AgentStreamEvent:
-    """Single SSE-style chunk emitted while the agent is running."""
-
-    event: str
-    token: Optional[str] = None
-    data: Any = None
-    final_result: Optional[RunResult] = None
-    usage: Any = None
-    context: Any = None
-
-    @property
-    def is_final(self) -> bool:
-        return self.final_result is not None
-
-    def to_sse(self) -> str:
-        payload = (
-            self.token
-            if self.token is not None
-            else ""
-            if self.data is None
-            else str(self.data)
-        )
-        return f"event: {self.event}\ndata: {payload}\n\n"
 
 
 def _common_instruction_preamble() -> str:
@@ -210,80 +184,6 @@ def _ensure_api_key() -> str:
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY 환경 변수를 먼저 설정하세요.")
     return api_key
-
-
-def _split_text_into_tokens(text: str) -> Iterable[str]:
-    if not text:
-        return []
-    tokens: list[str] = []
-    buffer = ""
-    for ch in text:
-        buffer += ch
-        if ch in {" ", "\n"}:
-            tokens.append(buffer)
-            buffer = ""
-    if buffer:
-        tokens.append(buffer)
-    return tokens
-
-
-def _extract_stream_token(event: Any) -> Optional[str]:
-    if event is None:
-        return None
-    if isinstance(event, str):
-        return event
-    if isinstance(getattr(event, "text", None), str):
-        return event.text  # type: ignore[attr-defined]
-    delta = getattr(event, "delta", None)
-    if delta is not None:
-        candidate = getattr(delta, "text", None)
-        if isinstance(candidate, str):
-            return candidate
-        content = getattr(delta, "content", None)
-        if isinstance(content, list):
-            for item in content:
-                text_value = getattr(item, "text", None) or getattr(item, "delta", None)
-                if isinstance(text_value, str):
-                    return text_value
-    token = getattr(event, "token", None)
-    if isinstance(token, str):
-        return token
-    return None
-
-
-def _extract_final_result(event: Any) -> Optional[RunResult]:
-    if isinstance(event, RunResult):
-        return event
-    candidate = getattr(event, "result", None)
-    if isinstance(candidate, RunResult):
-        return candidate
-    candidate = getattr(event, "run_result", None)
-    if isinstance(candidate, RunResult):
-        return candidate
-    return None
-
-
-def _extract_usage(event: Any) -> Any:
-    if hasattr(event, "usage"):
-        return event.usage  # type: ignore[attr-defined]
-    response = getattr(event, "response", None)
-    if response is not None and hasattr(response, "usage"):
-        return response.usage  # type: ignore[attr-defined]
-    return None
-
-
-async def _fallback_stream(
-    result: RunResult, context: Any
-) -> AsyncIterator[AgentStreamEvent]:
-    for token in _split_text_into_tokens(result.final_output):
-        yield AgentStreamEvent(event="response.delta", token=token, context=context)
-    yield AgentStreamEvent(
-        event="response.completed",
-        data=result.final_output,
-        final_result=result,
-        usage=result.context_wrapper.usage,
-        context=context,
-    )
 
 
 async def run_agent_once(prompt: str, instructions: str | None = None) -> RunResult:

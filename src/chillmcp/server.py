@@ -14,14 +14,14 @@ class ChillServer:
     def __init__(
         self,
         *,
-        boss_alertness: int = 35,
-        boss_alertness_cooldown: int = 120,
+        boss_alertness: int = 50,
+        boss_alertness_cooldown: int = 300,
         stress_increase_rate: int = 1,
         rng_seed: int | None = None,
     ) -> None:
-        boss_alertness = int(max(0, min(100, boss_alertness)))
-        boss_alertness_cooldown = max(0, int(boss_alertness_cooldown))
-        stress_increase_rate = int(max(1, min(100, stress_increase_rate)))
+        boss_alertness = max(0, min(100, boss_alertness))
+        boss_alertness_cooldown = max(0, boss_alertness_cooldown)
+        stress_increase_rate = max(1, stress_increase_rate)
 
         self.state = ChillState(
             boss_alertness=boss_alertness,
@@ -130,8 +130,8 @@ class ChillServer:
 
 def create_server(
     *,
-    boss_alertness: int = 35,
-    boss_alertness_cooldown: int = 120,
+    boss_alertness: int = 50,
+    boss_alertness_cooldown: int = 300,
     stress_increase_rate: int = 1,
     rng_seed: int | None = None,
 ) -> ChillServer:

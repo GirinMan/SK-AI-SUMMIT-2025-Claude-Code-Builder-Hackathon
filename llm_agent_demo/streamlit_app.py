@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List
 
 import streamlit as st
 
-from llm_agent_demo.chillmcp_core import (
+from llm_agent_demo.utils import (
     DEFAULT_AGENT_PERSONA,
     collect_tool_activity_entries,
     get_agent_persona,
