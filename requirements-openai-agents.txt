@@ -1,4 +1,0 @@
-# llm_agent_demo/openai_agents_mcp_demo.py 실행에 필요한 추가 의존성
-openai-agents>=0.4.1
-streamlit>=1.37.0
-python-dotenv>=1.0.0
