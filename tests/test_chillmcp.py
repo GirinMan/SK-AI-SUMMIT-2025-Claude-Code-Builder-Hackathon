@@ -6,21 +6,22 @@ import select
 import subprocess
 import sys
 import time
-from pathlib import Path
+from fastmcp import Client
 
 import pytest
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
-
 import main
-from fastmcp import Client
 
 
 def test_cli_arguments_are_logged() -> None:
     process = subprocess.Popen(
-        [sys.executable, "main.py", "--boss_alertness", "80", "--boss_alertness_cooldown", "10"],
-        cwd=PROJECT_ROOT,
+        [
+            sys.executable,
+            "main.py",
+            "--boss_alertness",
+            "80",
+            "--boss_alertness_cooldown",
+            "10",
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=False,
@@ -82,7 +83,7 @@ def test_boss_alert_level_triggers_delay(monkeypatch: pytest.MonkeyPatch) -> Non
     async def fake_sleep(seconds: float) -> None:
         recorded["seconds"] = seconds
 
-    monkeypatch.setattr(main.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
 
     asyncio.run(state.perform_break("test", (1, 1), "flair"))
 
@@ -108,7 +109,9 @@ def test_tool_response_format(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "Boss Alert Level:" in result_text
 
 
-def test_boss_alert_increases_with_high_probability(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_boss_alert_increases_with_high_probability(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     server = main.create_server(boss_alertness=100)
     state = server.state
     state.boss_alert_level = 2
@@ -127,6 +130,7 @@ def test_take_a_break_tool_via_client(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(state.rng, "randint", lambda a, b: a)
 
     client = Client(server.mcp)
+
     async def scenario() -> Client.CallToolResult:
         async with client:
             return await client.call_tool("take_a_break")
@@ -137,7 +141,9 @@ def test_take_a_break_tool_via_client(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "Break Summary:" in result.content[0].text
 
 
-def test_consecutive_tool_calls_raise_boss_alert(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_consecutive_tool_calls_raise_boss_alert(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Ensure sequential breaks increase the boss alert level as specified."""
 
     server = main.create_server(boss_alertness=100)
@@ -146,6 +152,7 @@ def test_consecutive_tool_calls_raise_boss_alert(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(state.rng, "random", lambda: 0.0)
 
     client = Client(server.mcp)
+
     async def scenario() -> tuple[int, int]:
         async with client:
             await client.call_tool("take_a_break")

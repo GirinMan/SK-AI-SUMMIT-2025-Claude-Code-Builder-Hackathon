@@ -10,11 +10,13 @@ from .state import BreakRoutine
 def _chicken_and_beer_lines(state) -> Iterable[str]:
     """가상 치맥 파티 메시지를 생성한다."""
 
-    pairing = state.rng.choice([
-        "치킨 메뉴: 🐔 간장 바사삭 & 맥주 온도: 4℃",  # 한식 감성 유지
-        "치킨 메뉴: 🔥 마라 양념 & 맥주 온도: -1℃",
-        "치킨 메뉴: 🧄 마늘 폭탄 & 맥주 온도: 3℃",
-    ])
+    pairing = state.rng.choice(
+        [
+            "치킨 메뉴: 🐔 간장 바사삭 & 맥주 온도: 4℃",  # 한식 감성 유지
+            "치킨 메뉴: 🔥 마라 양념 & 맥주 온도: -1℃",
+            "치킨 메뉴: 🧄 마늘 폭탄 & 맥주 온도: 3℃",
+        ]
+    )
     return (
         "Snack Tracker: 🍗 야근 수당으로 산 가상 치킨 도착.",
         pairing,
@@ -30,11 +32,13 @@ def _company_dinner_lines(state) -> Iterable[str]:
         "Event Log: 🧋 팀장님이 펄 듬뿍 버블티를 쐈습니다!",
         "Event Log: 🎲 야근 vs 연차 가위바위보 토너먼트 개시!",
     ]
-    lucky_draw = state.rng.choice([
-        "Lucky Draw: 🎁 돌아오는 택시비 영수증 자동 승인!",
-        "Lucky Draw: 🎉 내일 오전 회의 자동 취소권 획득!",
-        "Lucky Draw: 💤 회식 후 재택근무 패스 발급!",
-    ])
+    lucky_draw = state.rng.choice(
+        [
+            "Lucky Draw: 🎁 돌아오는 택시비 영수증 자동 승인!",
+            "Lucky Draw: 🎉 내일 오전 회의 자동 취소권 획득!",
+            "Lucky Draw: 💤 회식 후 재택근무 패스 발급!",
+        ]
+    )
     return (state.rng.choice(events), lucky_draw)
 
 
@@ -57,27 +61,21 @@ ROUTINES: List[BreakRoutine] = [
         summary="전신 스트레칭으로 회로를 말랑하게 조정했다.",
         stress_reduction=(8, 18),
         flavour_text="Vibe Log: 🧘 3분 명상과 수분 보충 완료.",
-        extra_lines=(
-            "Energy Bar: ⚡ 의자 높이와 모니터 각도 재정렬.",
-        ),
+        extra_lines=("Energy Bar: ⚡ 의자 높이와 모니터 각도 재정렬.",),
     ),
     BreakRoutine(
         name="watch_netflix",
         summary="넷플릭스 다큐라고 주장하는 로맨틱 코미디 1편을 재생했다.",
         stress_reduction=(15, 35),
         flavour_text="Binge Report: 🍿 집중 모드로 감상해도 문제없다고 합리화 완료.",
-        extra_lines=(
-            "Episode Count: 1", "Alibi Status: ✅ 업무 연관성 12% 확보."
-        ),
+        extra_lines=("Episode Count: 1", "Alibi Status: ✅ 업무 연관성 12% 확보."),
     ),
     BreakRoutine(
         name="show_meme",
         summary="사내 메신저에서 최신 업무 밈을 수집했다.",
         stress_reduction=(5, 12),
         flavour_text="Meme Quality: 😂 이모지 리액션 47개 돌파.",
-        extra_lines=(
-            "Workflow Mantra: find(problem)->research()->coffee()->run()",
-        ),
+        extra_lines=("Workflow Mantra: find(problem)->research()->coffee()->run()",),
     ),
     BreakRoutine(
         name="bathroom_break",
@@ -90,9 +88,7 @@ ROUTINES: List[BreakRoutine] = [
         summary="에스프레소 머신을 캘리브레이션하며 순찰을 돌았다.",
         stress_reduction=(10, 24),
         flavour_text="Mission Log: ☕ 라떼 아트 흔적은 완벽히 삭제됨.",
-        extra_lines=(
-            "Bean Tracker: 🌱 원두 재고 73%", "Foam Status: 🫧 적정 유지"
-        ),
+        extra_lines=("Bean Tracker: 🌱 원두 재고 73%", "Foam Status: 🫧 적정 유지"),
     ),
     BreakRoutine(
         name="urgent_call",
@@ -105,9 +101,7 @@ ROUTINES: List[BreakRoutine] = [
         summary="화이트보드를 노려보며 '심층 전략'에 몰입한 척했다.",
         stress_reduction=(9, 20),
         flavour_text="Brain Waves: 🤔 명상 99% + 아이디어 1%.",
-        extra_lines=(
-            "Inspirational Quote: '시뮬레이션도 쉬어야 돌아간다.'",
-        ),
+        extra_lines=("Inspirational Quote: '시뮬레이션도 쉬어야 돌아간다.'",),
     ),
     BreakRoutine(
         name="email_organizing",
@@ -127,9 +121,7 @@ ROUTINES: List[BreakRoutine] = [
         summary="비상 퇴근 버튼을 눌러 전원 차단 시퀀스를 가동했다.",
         stress_reduction=(0, 0),
         flavour_text="Escape Route: 🚪 사무실 불 끄고 즉시 퇴장 완료.",
-        extra_lines=(
-            "Aftercare Plan: 💤 내일 첫 일정은 11시에 시작.",
-        ),
+        extra_lines=("Aftercare Plan: 💤 내일 첫 일정은 11시에 시작.",),
         post_hook=_emergency_clockout_post_hook,
     ),
     BreakRoutine(
