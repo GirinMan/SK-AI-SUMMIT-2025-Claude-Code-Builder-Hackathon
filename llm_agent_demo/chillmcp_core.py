@@ -316,35 +316,94 @@ async def run_agent_once(prompt: str, instructions: str | None = None) -> RunRes
         await server.cleanup()
 
 
-def iterate_tool_activity(result: RunResult, context: Any) -> Iterable[str]:
-    """Yield a textual timeline of MCP tool invocations in the run result."""
+def collect_tool_activity_entries(
+    result: RunResult, context: Any
+) -> List[dict[str, Any]]:
+    """Return structured details for each MCP tool call in the run."""
 
-    call_labels: dict[str, str] = {}
+    entries: List[dict[str, Any]] = []
+    call_lookup: dict[str, dict[str, Any]] = {}
+
     for item in result.new_items:
         if isinstance(item, ToolCallItem):
             label = _build_tool_label(item.raw_item)
-            arguments = _extract_arguments(item.raw_item)
             call_id = getattr(item.raw_item, "call_id", None) or getattr(
                 item.raw_item, "id", None
             )
+            arguments_text = _extract_arguments(item.raw_item)
+            arguments_json = _parse_json_text(arguments_text)
+
+            entry = {
+                "id": call_id,
+                "label": label,
+                "arguments": {
+                    "text": arguments_text,
+                    "json": arguments_json,
+                },
+                "results": [],
+            }
+            entries.append(entry)
+
             if call_id:
-                call_labels[call_id] = label
-            yield f"→ {label} args={arguments}"
+                call_lookup[call_id] = entry
 
             inline_output = getattr(item.raw_item, "output", None)
             if inline_output not in (None, ""):
-                output_text = _stringify_output(inline_output)
+                output_text, output_json = _normalize_tool_payload(inline_output)
                 _record_break_history(context, output_text)
-                yield f"   ↳ result: {output_text}"
+                entry["results"].append(
+                    {
+                        "text": output_text,
+                        "json": output_json,
+                        "label": label,
+                    }
+                )
+
         elif isinstance(item, ToolCallOutputItem):
             output_payload = getattr(item.raw_item, "output", item.output)
-            output_text = _stringify_output(output_payload)
+            output_text, output_json = _normalize_tool_payload(output_payload)
             call_id = getattr(item.raw_item, "call_id", None) or getattr(
                 item.raw_item, "id", None
             )
-            label = call_labels.get(call_id, "tool-call")
+            entry = call_lookup.get(call_id)
+
             _record_break_history(context, output_text)
-            yield f"   ↳ result ({label}): {output_text}"
+
+            result_entry = {
+                "text": output_text,
+                "json": output_json,
+                "label": entry["label"] if entry else "tool-call",
+            }
+
+            if entry is not None:
+                entry["results"].append(result_entry)
+            else:
+                entries.append(
+                    {
+                        "id": call_id,
+                        "label": "tool-call",
+                        "arguments": {
+                            "text": "{}",
+                            "json": {},
+                        },
+                        "results": [result_entry],
+                    }
+                )
+
+    return entries
+
+
+def iterate_tool_activity(result: RunResult, context: Any) -> Iterable[str]:
+    """Yield a textual timeline of MCP tool invocations in the run result."""
+
+    for entry in collect_tool_activity_entries(result, context):
+        label = entry["label"]
+        arguments_text = entry["arguments"]["text"]
+        yield f"→ {label} args={arguments_text}"
+
+        for result_entry in entry["results"]:
+            output_text = result_entry["text"]
+            yield f"   ↳ result: {output_text}"
 
 
 def render_cli_report(result: RunResult) -> None:
@@ -400,6 +459,24 @@ def _extract_arguments(raw_item: Any) -> str:
 def _record_break_history(context: Any, output_text: str) -> None:
     if isinstance(context, ChillRunContext):
         context.completed_breaks.append(output_text)
+
+
+def _parse_json_text(text: str | None) -> Any:
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
+
+
+def _normalize_tool_payload(payload: Any) -> tuple[str, Any | None]:
+    if isinstance(payload, (dict, list)):
+        return json.dumps(payload, ensure_ascii=False), payload
+    if isinstance(payload, str):
+        json_payload = _parse_json_text(payload)
+        return payload, json_payload
+    return str(payload), None
 
 
 def _safe_pretty_json(raw: str | None) -> str:
