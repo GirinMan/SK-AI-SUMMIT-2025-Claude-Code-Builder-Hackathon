@@ -15,13 +15,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--boss_alertness",
         type=int,
-        default=35,
+        default=50,
         help="휴식 시 상사가 눈치챌 확률(0-100).",
     )
     parser.add_argument(
         "--boss_alertness_cooldown",
         type=int,
-        default=120,
+        default=300,
         help="보스 경보 수치가 1 감소하는 데 필요한 초 단위 시간.",
     )
     parser.add_argument(
