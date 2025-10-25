@@ -199,6 +199,7 @@ async def run_agent_once(prompt: str, instructions: str | None = None) -> RunRes
         },
         cache_tools_list=True,
         name="ChillMCP stdio server",
+        timeout=60.0,  # MCP tool 호출 timeout을 30초로 설정
     )
     instructions_text = instructions or DEFAULT_AGENT_INSTRUCTIONS
 
