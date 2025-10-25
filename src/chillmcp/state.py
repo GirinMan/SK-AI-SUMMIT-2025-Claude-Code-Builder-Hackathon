@@ -152,6 +152,22 @@ class ChillState:
         self.boss_alert_level = max(0, self.boss_alert_level - steps)
         self.last_boss_alert_decay += steps * self.boss_alertness_cooldown
 
+    def _snapshot_state(self) -> dict[str, float | int]:
+        """스트레스와 보스 경보 상태를 간결한 딕셔너리로 반환한다."""
+
+        return {
+            "stress_level": round(self.stress_level, 2),
+            "boss_alert_level": self.boss_alert_level,
+        }
+
+    def _format_state(self, snapshot: dict[str, float | int]) -> str:
+        """스냅샷을 사람 친화적인 로깅 문자열로 변환한다."""
+
+        return (
+            f"stress={snapshot['stress_level']}, "
+            f"boss_alert={snapshot['boss_alert_level']}"
+        )
+
     async def perform_break(
         self,
         routine: BreakRoutine | str,
@@ -166,6 +182,7 @@ class ChillState:
         if isinstance(routine, BreakRoutine):
             selected_routine = routine
             scenario = selected_routine.select_scenario(self)
+            tool_label = selected_routine.name
         else:
             if stress_reduction is None:
                 raise TypeError("스트레스 감소 범위를 지정해야 합니다.")
@@ -185,6 +202,14 @@ class ChillState:
                 scenarios=(scenario,),
                 post_hook=post_hook,
             )
+            tool_label = scenario.headline
+
+        state_before = self._snapshot_state()
+        print(
+            "[ChillMCP][tool="
+            f"{tool_label}] before state: "
+            f"{self._format_state(state_before)}"
+        )
 
         self.tick()
 
@@ -233,6 +258,13 @@ class ChillState:
             f"Break Summary: {summary_text}\n"
             f"Stress Level: {stress_value}\n"
             f"Boss Alert Level: {self.boss_alert_level}"
+        )
+
+        state_after = self._snapshot_state()
+        print(
+            "[ChillMCP][tool="
+            f"{tool_label}] after state: "
+            f"{self._format_state(state_after)}"
         )
 
         return {"content": [{"type": "text", "text": payload_text}]}

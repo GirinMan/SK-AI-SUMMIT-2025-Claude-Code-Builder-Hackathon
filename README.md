@@ -62,6 +62,13 @@ Stress increase rate: 3/min
 
 실행 중 `Ctrl+C`를 누르면 `"ChillMCP 종료 요청 수신. 충분히 쉬고 다시 만나요!"` 메시지가 출력되어 피평가자의 미소를 유발합니다.([main.py](./main.py) 참고)
 
+MCP 도구를 호출하면 STDOUT에 호출된 도구와 실행 전후 상태가 간략히 기록됩니다. 예시는 다음과 같습니다.([src/chillmcp/state.py](./src/chillmcp/state.py) 참고)
+
+```
+[ChillMCP][tool=take_a_break] before state: stress=42.0, boss_alert=1
+[ChillMCP][tool=take_a_break] after state: stress=35.0, boss_alert=1
+```
+
 ## 테스트 및 검증 도구
 
 ### Pytest 스위트
