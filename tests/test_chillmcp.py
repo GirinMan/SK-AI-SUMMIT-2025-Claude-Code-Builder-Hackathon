@@ -7,8 +7,14 @@ import subprocess
 import sys
 import time
 from fastmcp import Client
+from pathlib import Path
 
 import pytest
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import main
 
 
@@ -46,6 +52,7 @@ def test_cli_arguments_are_logged() -> None:
         log_output = collected.decode(errors="replace")
         assert "Boss alertness configured: 80" in log_output
         assert "Boss alertness cooldown: 10s" in log_output
+        assert "Stress increase rate: 1/min" in log_output
     finally:
         if process.poll() is None:
             process.kill()
@@ -96,7 +103,7 @@ def test_tool_response_format(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(state.rng, "randint", lambda a, b: a)
 
-    result_text = asyncio.run(
+    result_payload = asyncio.run(
         state.perform_break(
             "Unit test chill protocol engaged.",
             (5, 10),
@@ -104,9 +111,17 @@ def test_tool_response_format(monkeypatch: pytest.MonkeyPatch) -> None:
         )
     )
 
-    assert "Break Summary:" in result_text
-    assert "Stress Level:" in result_text
-    assert "Boss Alert Level:" in result_text
+    assert isinstance(result_payload, dict)
+    assert "content" in result_payload
+    assert result_payload["content"]
+    text_entry = result_payload["content"][0]
+    assert text_entry["type"] == "text"
+    text = text_entry["text"]
+
+    assert text.count("\n") == 2
+    assert "Break Summary:" in text
+    assert "Stress Level:" in text
+    assert "Boss Alert Level:" in text
 
 
 def test_boss_alert_increases_with_high_probability(
