@@ -1,4 +1,8 @@
-# ChillMCP – 휴식 자동화 서버 안내서
+# ChillMCP
+## SK-AI-SUMMIT-2025-Claude-Code-Builder-Hackathon
+- 팀 BHSN(김형준, 이성진, 이현우, 홍성원)
+
+![Streamlit 데모 전체 UI](./assets/streamlit_demo_overview.png)
 
 이 저장소는 SKT AI Summit Claude Code Hackathon 사전 미션용 **ChillMCP** 서버의 완성형 구현을 담고 있습니다. 아래 문서는 기존 스켈레톤 소개와 세계관 설명을 제외하고, 실제 제출물에서 구현한 핵심 구성 요소와 평가자를 위한 사용 가이드에 집중합니다.
 
@@ -20,7 +24,8 @@ ChillMCP는 [FastMCP](https://github.com/modelcontextprotocol/fastmcp) 기반 st
 
 서버는 11개의 도구를 노출하며, 모든 도구는 동일한 포맷의 텍스트 콘텐츠를 반환합니다. `ChillState.perform_break()`는 실행 직전 `tick()`을 호출하여 자연 증가/감소를 반영하고, 선택된 시나리오에 따라 메시지를 합성합니다.([src/chillmcp/state.py](./src/chillmcp/state.py) 참고)
 
-- **기본 루틴**: `take_a_break`, `watch_netflix`, `show_meme`, `bathroom_break`, `coffee_mission`, `urgent_call`, `deep_thinking`, `email_organizing`
+- **기본 루틴**: `take_a_break`, `watch_netflix`, `show_meme`,
+- **고급 루틴**: `bathroom_break`, `coffee_mission`, `urgent_call`, `deep_thinking`, `email_organizing`
 - **보너스 루틴**: `virtual_chimaek`, `emergency_clockout`, `company_dinner`
 
 응답 텍스트 예시는 다음과 같습니다.
@@ -42,13 +47,15 @@ Boss Alert Level: 0
 3. **휴식 실행**: 루틴별 스트레스 감소 범위에서 난수를 선택해 스트레스를 낮추고, `boss_alertness` 확률로 경보 단계를 올립니다.
 4. **결과 메시지**: 헤드라인/디테일 라인/경보 상태 문구를 안전하게 합쳐 `Break Summary`를 구성하고, 반올림된 스트레스 값과 함께 반환합니다.
 
-`--rng_seed` 옵션으로 난수를 고정하면 테스트 시나리오를 재현할 수 있습니다. 또한 `stress_increase_rate`를 CLI에서 조절할 수 있어 장기 실행이나 평가 환경에 맞는 미세 조정이 가능합니다.([src/chillmcp/cli.py](./src/chillmcp/cli.py), [src/chillmcp/state.py](./src/chillmcp/state.py) 참고)
+`--rng_seed` 옵션으로 난수를 고정하면 테스트 시나리오를 재현할 수 있습니다. 또한 `stress_increase_rate`를 CLI에서 조절할 수 있어 장기 실행이나 평가 환경에 맞는 미세 조정이 가능합니다.([src/chillmcp/cli.py](./src/chillmcp/cli.py), [src/chillmcp/state.py](./src/chillmcp/state.py) 참고) 위 두 옵션은 과제 요구사항에 포함된 필수 파라미터가 아니라, 개발 과정에서 테스트 편의를 위해 추가한 항목이므로 README에 명시된 기본 사용법에는 영향을 주지 않습니다.
 
 ## 실행 방법과 로그
 
 ```
 python main.py --boss_alertness 80 --boss_alertness_cooldown 60 --stress-increase-rate 3
 ```
+
+위 실행 예시는 테스트 편의를 위해 추가된 선택적 인자(`--stress-increase-rate`, `--rng_seed`)를 포함할 수 있으나, 기본 필수 항목은 `--boss_alertness`와 `--boss_alertness_cooldown`입니다. 선택적 인자를 명시하지 않아도 서버 실행과 과제 요구사항 충족에는 문제가 없습니다.
 
 서버를 기동하면 STDERR로 아래와 같은 로그가 출력되어 파라미터가 제대로 전달되었는지 즉시 확인할 수 있습니다.([src/chillmcp/cli.py](./src/chillmcp/cli.py) 참고)
 
@@ -123,6 +130,14 @@ python evaluation/chillmcp_evaluator.py
 pip install -r requirements.txt -r requirements-openai-agents.txt
 streamlit run llm_agent_demo/streamlit_app.py
 ```
+
+아래 이미지는 데모 앱과 예시 응답, 해당 응답을 생성한 MCP 호출 로그를 보여줍니다.
+
+![Streamlit 데모 전체 UI](./assets/streamlit_demo_overview.png)
+
+![샘플 에이전트 답변 예시](./assets/sample_agent_response.png)
+
+![MCP 도구 호출 로그 예시](./assets/sample_tool_call_outputs.png)
 
 ## 추가 문서
 

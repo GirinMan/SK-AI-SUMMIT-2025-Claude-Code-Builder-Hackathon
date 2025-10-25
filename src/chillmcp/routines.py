@@ -290,7 +290,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Pose Tracker: 🧘‍♀️ 햄스트링 긴장도 32% 감소",
                     "Window Seat: ☀️ 비타민 D 충전 완료",
-                    f"Breath Sync: 4-7-8 호흡 {state.rng.randint(2,4)}세트",
+                    f"Breath Sync: 4-7-8 호흡 {state.rng.randint(2, 4)}세트",
                 ),
             ),
             RoutineScenario(
@@ -299,7 +299,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Step Log: 🚶 420보 걷기",
                     "Tension Meter: 종아리 뭉침 -45%",
-                    f"Mindset: '오늘 야근은 없다' 주문 {state.rng.randint(3,5)}회",
+                    f"Mindset: '오늘 야근은 없다' 주문 {state.rng.randint(3, 5)}회",
                 ),
             ),
         ),
@@ -382,7 +382,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Curation: 📎 생산성 밈 5개 태깅",
                     "Share Plan: 팀 회의 아이스브레이크 예약",
-                    f"LOL Buffer: 유관부서 전파 리스트 {state.rng.randint(2,4)}건",
+                    f"LOL Buffer: 유관부서 전파 리스트 {state.rng.randint(2, 4)}건",
                 ),
             ),
             RoutineScenario(
@@ -456,7 +456,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Foam Status: 🫧 마이크로폼 95%",
                     "Queue Management: 동료 주문 3건 자동 처리",
-                    f"Bonus Shot: 바닐라 시럽 {state.rng.randint(1,3)}펌프 절약",
+                    f"Bonus Shot: 바닐라 시럽 {state.rng.randint(1, 3)}펌프 절약",
                 ),
             ),
             RoutineScenario(
@@ -505,7 +505,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Signal Check: 📶 수신율 3칸 유지",
                     "Loop Count: 빌딩 주변 1.5바퀴",
-                    f"Excuse Timer: '곧 들어갑니다' 멘트 {state.rng.randint(2,4)}회",
+                    f"Excuse Timer: '곧 들어갑니다' 멘트 {state.rng.randint(2, 4)}회",
                 ),
             ),
         ),
@@ -539,7 +539,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Sticky Notes: 색상 5종 교차 사용",
                     "Timer: Pomodoro 1회 버전",
-                    f"Keyword Count: '혁신' 단어 {state.rng.randint(4,7)}회",
+                    f"Keyword Count: '혁신' 단어 {state.rng.randint(4, 7)}회",
                 ),
             ),
         ),
@@ -573,7 +573,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Focus Mode: 알림 30분 차단",
                     "Bulk Action: 뉴스레터 12건 아카이브",
-                    f"Wishlist Update: 대비책 아이템 {state.rng.randint(3,5)}개",
+                    f"Wishlist Update: 대비책 아이템 {state.rng.randint(3, 5)}개",
                 ),
             ),
         ),
@@ -635,7 +635,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Cover Sheet: 보안 카드 반납 인증",
                     "Transit Mode: 엘리베이터 프리패스",
-                    f"Status Ping: 동료에게 '내일 봬요' DM {state.rng.randint(1,2)}건",
+                    f"Status Ping: 동료에게 '내일 봬요' DM {state.rng.randint(1, 2)}건",
                 ),
             ),
             RoutineScenario(
@@ -685,7 +685,7 @@ ROUTINES: Sequence[BreakRoutine] = (
                 detail_lines=lambda state: (
                     "Excuse: '집에 시끄러운 공사' 카드 사용",
                     "Emoji Log: 🙏 5회, 😂 7회, 🍻 3회",
-                    f"Reward: 마일리지 쿠폰 {state.rng.randint(1,3)}장 확보",
+                    f"Reward: 마일리지 쿠폰 {state.rng.randint(1, 3)}장 확보",
                 ),
             ),
         ),
