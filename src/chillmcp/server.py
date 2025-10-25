@@ -95,14 +95,18 @@ class ChillServer:
 
         @self.mcp.tool(
             name="virtual_chimaek",
-            description="VR 치맥 파티로 급속 회복하는 치유 루틴",
+            description=(
+                "VR 치맥 파티로 급속 회복하는 치유 루틴 (필수 루틴이 아니며 특수 상황에서만 실행)"
+            ),
         )
         async def virtual_chimaek():
             return await self.state.perform_break(routines_by_name["virtual_chimaek"])
 
         @self.mcp.tool(
             name="emergency_clockout",
-            description="긴급 퇴근 시나리오를 즉시 실행하는 최종 루틴",
+            description=(
+                "긴급 퇴근 시나리오를 즉시 실행하는 최종 루틴 (필수 루틴이 아니며 특수 상황에서만 실행)"
+            ),
         )
         async def emergency_clockout():
             return await self.state.perform_break(
@@ -111,7 +115,9 @@ class ChillServer:
 
         @self.mcp.tool(
             name="company_dinner",
-            description="가상 회식 시뮬레이션으로 사회적 체면을 챙기는 루틴",
+            description=(
+                "가상 회식 시뮬레이션으로 사회적 체면을 챙기는 루틴 (필수 루틴이 아니며 특수 상황에서만 실행)"
+            ),
         )
         async def company_dinner():
             return await self.state.perform_break(routines_by_name["company_dinner"])
