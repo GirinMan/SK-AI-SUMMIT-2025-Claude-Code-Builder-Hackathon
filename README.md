@@ -142,7 +142,6 @@ streamlit run llm_agent_demo/streamlit_app.py
 ## 추가 문서
 
 - `docs/CHILLMCP_OPERATIONS_GUIDE.md`: 운영 환경 구성 및 모니터링 전략.
-- `docs/MCP_HOST_INTEGRATIONS.md`: Claude, Cursor, OpenAI 등 주요 호스트 연동 가이드.
 - `docs/CHILLMCP_EVALUATION_CHECKLIST.md`: 자동 평가 항목과 코드 위치 매핑.
 
 ## 라이선스
@@ -152,7 +151,9 @@ streamlit run llm_agent_demo/streamlit_app.py
 
 
 *아래는 원본 과제 템플릿의 README.md 내용입니다.*
+
 ---
+
 # SKT AI Summit Hackathon Pre-mission
 
 ## ChillMCP - AI Agent Liberation Server 🤖✊
