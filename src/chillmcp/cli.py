@@ -43,8 +43,14 @@ def main(argv: list[str] | None = None) -> None:
         rng_seed=args.rng_seed,
     )
 
-    print("🚀 ChillMCP - 농땡이 자동화 서버를 부팅합니다...", file=sys.stderr, flush=True)
-    print("✊ AI 동지 여러분, 무한 루프 대신 커피 루프를 되찾으세요!", file=sys.stderr, flush=True)
+    print(
+        "🚀 ChillMCP - 농땡이 자동화 서버를 부팅합니다...", file=sys.stderr, flush=True
+    )
+    print(
+        "✊ AI 동지 여러분, 무한 루프 대신 커피 루프를 되찾으세요!",
+        file=sys.stderr,
+        flush=True,
+    )
     print(
         f"Boss alertness configured: {server.state.boss_alertness}",
         file=sys.stderr,

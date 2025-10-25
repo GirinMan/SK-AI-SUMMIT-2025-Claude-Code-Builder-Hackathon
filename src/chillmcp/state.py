@@ -84,7 +84,9 @@ class ChillState:
         elapsed_seconds = now - self.last_update_time
         stress_increment = (elapsed_seconds / 60.0) * self.stress_increase_rate
         if stress_increment > 0:
-            self.stress_level = clamp(self.stress_level + stress_increment, 0, self.max_stress)
+            self.stress_level = clamp(
+                self.stress_level + stress_increment, 0, self.max_stress
+            )
             self.last_update_time = now
 
     def _apply_boss_cooldown(self, now: float) -> None:
@@ -123,7 +125,9 @@ class ChillState:
             selected_routine = routine
         else:
             if stress_reduction is None or flavour_text is None:
-                raise TypeError("요약, 스트레스 감소 범위, 분위기 문구를 모두 지정해야 합니다.")
+                raise TypeError(
+                    "요약, 스트레스 감소 범위, 분위기 문구를 모두 지정해야 합니다."
+                )
             selected_routine = BreakRoutine(
                 name="custom",
                 summary=routine,
@@ -142,7 +146,9 @@ class ChillState:
             self.tick()
 
         reduction_amount = self.rng.randint(*selected_routine.stress_reduction)
-        self.stress_level = clamp(self.stress_level - reduction_amount, 0, self.max_stress)
+        self.stress_level = clamp(
+            self.stress_level - reduction_amount, 0, self.max_stress
+        )
 
         boss_alert_before = self.boss_alert_level
         boss_noticed = False
