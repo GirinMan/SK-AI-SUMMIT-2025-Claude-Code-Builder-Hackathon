@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import select
 import subprocess
@@ -122,6 +123,7 @@ def test_tool_response_format(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "Break Summary:" in text
     assert "Stress Level:" in text
     assert "Boss Alert Level:" in text
+    assert text.count(":") == 3
 
 
 def test_boss_alert_increases_with_high_probability(
@@ -154,6 +156,9 @@ def test_take_a_break_tool_via_client(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result.content
     assert "Break Summary:" in result.content[0].text
+
+    tool_payload = json.loads(result.content[0].text)
+    assert tool_payload["content"][0]["text"].count(":") == 3
 
 
 def test_consecutive_tool_calls_raise_boss_alert(

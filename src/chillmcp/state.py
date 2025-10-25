@@ -216,13 +216,14 @@ class ChillState:
         summary_parts = [scenario.headline]
         summary_parts.extend(scenario.render_details(self))
         if boss_noticed:
-            summary_parts.append("Boss Radar: 👀 상사 레이더가 깜박였습니다.")
+            summary_parts.append("Boss Radar 알림 👀 상사 레이더가 깜박였습니다")
         elif self.boss_alert_level == 0:
-            summary_parts.append("Boss Radar: ✅ 안전 지대 확보 완료.")
+            summary_parts.append("Boss Radar 리포트 ✅ 안전 지대 확보 완료")
         else:
-            summary_parts.append("Boss Radar: 🟡 주시 중이니 속도 조절!")
+            summary_parts.append("Boss Radar 주의 🟡 주시 중이니 속도 조절")
 
-        summary_text = " | ".join(part for part in summary_parts if part)
+        sanitized_parts = [part.replace(":", " -") for part in summary_parts if part]
+        summary_text = " | ".join(sanitized_parts)
 
         payload_text = (
             f"Break Summary: {summary_text}\n"
