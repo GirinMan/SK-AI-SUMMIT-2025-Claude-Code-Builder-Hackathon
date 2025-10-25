@@ -116,9 +116,8 @@ def _render_tool_activity(entries: Iterable[Dict[str, Any]]) -> None:
                     continue
                 block_type = block.get("type")
                 if block_type == "text":
-                    # Replace single newlines with markdown line breaks for readability.
                     block_text = block.get("text", "")
-                    st.markdown(block_text.replace("\n", "  \n"))
+                    st.code(block_text, language="text")
                 else:
                     st.json(block)
         elif parsed is not None:
@@ -150,7 +149,25 @@ def run_streamlit_app() -> None:
     all_personas = list_agent_personas()
     persona_map = {persona.slug: persona for persona in all_personas}
 
-    st.title("😴 ChillMCP 휴식 상담소")
+    col_logo, col_persona = st.columns([3, 1])
+    with col_logo:
+        st.code(
+            """\
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║   ██████╗██╗  ██╗██╗██╗     ██╗       ███╗   ███╗ ██████╗██████╗          ║
+║  ██╔════╝██║  ██║██║██║     ██║       ████╗ ████║██╔════╝██╔══██╗         ║
+║  ██║     ███████║██║██║     ██║       ██╔████╔██║██║     ██████╔╝         ║
+║  ██║     ██╔══██║██║██║     ██║       ██║╚██╔╝██║██║     ██╔═══╝          ║
+║  ╚██████╗██║  ██║██║███████╗███████╗  ██║ ╚═╝ ██║╚██████╗██║              ║
+║   ╚═════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝  ╚═╝     ╚═╝ ╚═════╝╚═╝              ║
+║                                                                           ║
+║                      AI Agent Liberation Server                           ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝""",
+            language="text",
+        )
+
     st.caption(
         "보스 몰래 딴짓하며 성과는 똑 부러지게 내는 에이전트 워크플로우를 체험하세요."
     )
@@ -239,16 +256,15 @@ def run_streamlit_app() -> None:
                             f"토큰 — 요청 {usage['requests']}, 입력 {usage['input_tokens']}, 출력 {usage['output_tokens']}, 총 {usage['total_tokens']}"
                         )
 
-    left_col, right_col = st.columns([3, 2])
-    with left_col:
-        prompt = st.text_area(
-            "보스에게 전달할 새 업무 요청",
-            value=st.session_state.prompt_text,
-            height=160,
-            key="prompt_text",
-        )
-        run_button = st.button("딴짓 벌이며 업무 처리하기", type="primary")
-    with right_col:
+    prompt = st.text_area(
+        "보스에게 전달할 새 업무 요청",
+        value=st.session_state.prompt_text,
+        height=160,
+        key="prompt_text",
+    )
+    run_button = st.button("딴짓 벌이며 업무 처리하기", type="primary")
+
+    with col_persona:
         st.subheader("현재 페르소나")
         st.markdown(f"{persona.emoji} **{persona.name}**")
         st.caption(persona.summary)

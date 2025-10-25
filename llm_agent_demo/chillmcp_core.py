@@ -376,7 +376,10 @@ def collect_tool_activity_entries(
                     break
 
             if entry is None:
-                entry = next((candidate for candidate in entries if not candidate["results"]), None)
+                entry = next(
+                    (candidate for candidate in entries if not candidate["results"]),
+                    None,
+                )
 
             if entry is None:
                 entry = last_entry
