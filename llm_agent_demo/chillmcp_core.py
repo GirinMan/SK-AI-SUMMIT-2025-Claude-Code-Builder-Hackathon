@@ -323,6 +323,7 @@ def collect_tool_activity_entries(
 
     entries: List[dict[str, Any]] = []
     call_lookup: dict[str, dict[str, Any]] = {}
+    last_entry: dict[str, Any] | None = None
 
     for item in result.new_items:
         if isinstance(item, ToolCallItem):
@@ -343,9 +344,11 @@ def collect_tool_activity_entries(
                 "results": [],
             }
             entries.append(entry)
+            last_entry = entry
 
             if call_id:
                 call_lookup[call_id] = entry
+                call_lookup[str(call_id)] = entry
 
             inline_output = getattr(item.raw_item, "output", None)
             if inline_output not in (None, ""):
@@ -366,6 +369,11 @@ def collect_tool_activity_entries(
                 item.raw_item, "id", None
             )
             entry = call_lookup.get(call_id)
+            if entry is None and call_id:
+                entry = call_lookup.get(str(call_id))
+
+            if entry is None and last_entry is not None:
+                entry = last_entry
 
             _record_break_history(context, output_text)
 
@@ -377,18 +385,21 @@ def collect_tool_activity_entries(
 
             if entry is not None:
                 entry["results"].append(result_entry)
+                last_entry = entry
             else:
-                entries.append(
-                    {
-                        "id": call_id,
-                        "label": "tool-call",
-                        "arguments": {
-                            "text": "{}",
-                            "json": {},
-                        },
-                        "results": [result_entry],
-                    }
-                )
+                fallback_entry = {
+                    "id": call_id,
+                    "label": "tool-call",
+                    "arguments": {
+                        "text": "{}",
+                        "json": {},
+                    },
+                    "results": [result_entry],
+                }
+                entries.append(fallback_entry)
+                if call_id:
+                    call_lookup[str(call_id)] = fallback_entry
+                last_entry = fallback_entry
 
     return entries
 
