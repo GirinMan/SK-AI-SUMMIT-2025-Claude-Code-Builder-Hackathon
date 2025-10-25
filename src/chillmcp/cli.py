@@ -65,12 +65,12 @@ def main(argv: list[str] | None = None) -> None:
         flush=True,
     )
     print(
-        f"Boss alertness cooldown: {server.state.boss_alertness_cooldown}s",
+        f"Stress increase rate: {server.state.stress_increase_rate}/min",
         file=sys.stderr,
         flush=True,
     )
     print(
-        f"Stress increase rate: {server.state.stress_increase_rate}/min",
+        f"Boss alertness cooldown: {server.state.boss_alertness_cooldown}s",
         file=sys.stderr,
         flush=True,
     )
